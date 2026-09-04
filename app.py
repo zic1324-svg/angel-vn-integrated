@@ -70,7 +70,7 @@ st.markdown("""
   .breadcrumb { font-size: 0.82rem; color: #888; margin-bottom: 4px; }
 
   .home-fab {
-    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    position: fixed; bottom: 24px; left: 24px; z-index: 9999;
     background: #4A9EFF; color: #fff !important;
     border-radius: 50px; padding: 10px 18px;
     font-size: 0.85rem; font-weight: 700;
