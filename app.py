@@ -387,7 +387,7 @@ def page_sales_npp():
     sorted_sa = sorted(salesmen.items(), key=lambda x: -x[1].get("total", 0))
 
     SKU_SHORT = {
-        "BS VÀ HMP CŨ": "BS",
+        "BS VÀ HMP CŨ": "BS VÀ HMP CŨ",
         "GIẶT XẢ":      "GIẶT XẢ",
         "PPSU":          "PPSU",
         "KHĂN ƯỚT":     "KHĂN ƯỚT",
@@ -410,7 +410,10 @@ def page_sales_npp():
             m_sa  = m_npp.get("salesmen", {}).get(sa_name, {})
             monthly.append(m_sa.get("total", 0))
 
-        active_skus = [SKU_SHORT[sku] for sku in SKU_LIST if skus.get(sku, 0) > 0]
+        active_skus = [
+            SKU_SHORT[sku] for sku in SKU_LIST
+            if skus.get(sku, 0) > 0 and not (sku == "GIẶT XẢ" and month >= 8)
+        ]
         sku_str = ", ".join(active_skus)
 
         row = st.columns(col_widths)
