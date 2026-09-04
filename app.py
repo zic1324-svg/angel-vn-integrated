@@ -70,6 +70,26 @@ FILENAME = "integrated_records.json"
 LOCAL_DATA = Path(__file__).parent / "data" / "integrated_records.json"
 
 SKU_LIST = ["BS VÀ HMP CŨ", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
+
+REGION_MAP = {
+    "AGI":"An Giang","BDI":"Bình Định","BDU":"Bình Dương","BGI":"Bắc Giang",
+    "BLI":"Bạc Liêu","BNI":"Bắc Ninh","BPH":"Bình Phước","BRV":"Bà Rịa-Vũng Tàu",
+    "BTH":"Bình Thuận","BTR":"Bến Tre","CMA":"Cà Mau","CTH":"Cần Thơ",
+    "DLA":"Đắk Lắk","DNA":"Đà Nẵng","DNO":"Đắk Nông","DON":"Đồng Nai",
+    "DTH":"Đồng Tháp","GLA":"Gia Lai","HAN":"Hà Nội","HCM":"TP. HCM",
+    "HGI":"Hậu Giang","HPH":"Hải Phòng","HTI":"Hà Tĩnh","HUE":"Huế",
+    "HYE":"Hưng Yên","KGI":"Kiên Giang","KHH":"Khánh Hòa","LAN":"Long An",
+    "LCA":"Lào Cai","LDO":"Lâm Đồng","NAN":"Nghệ An","NBI":"Ninh Bình",
+    "NDI":"Nam Định","PTH":"Phú Thọ","QBI":"Quảng Bình","QNA":"Quảng Nam",
+    "QNG":"Quảng Ngãi","QNI":"Quảng Ninh","QTR":"Quảng Trị","STR":"Sóc Trăng",
+    "TBI":"Thái Bình","TGI":"Tiền Giang","THO":"Thanh Hóa","TNG":"Thái Nguyên",
+    "TNI":"Tây Ninh","TQU":"Tuyên Quang","TVI":"Trà Vinh","VLO":"Vĩnh Long",
+    "VPH":"Vĩnh Phúc",
+}
+
+def get_region(code):
+    parts = code.split(".")
+    return REGION_MAP.get(parts[1], parts[1]) if len(parts) >= 2 else ""
 ASM_FULL = {
     'NHU':'Nguyễn Văn Như','HAI':'Diệp Thế Hải','VINH':'Nguyễn Văn Vịnh',
     'LAM':'Kiều Phú Lâm','QUOC':'Nguyễn Minh Quốc','TU':'Nguyễn Hữu Bảy Tú',
@@ -286,7 +306,7 @@ def page_asm_npp_list():
             href = card_href("sales_npp", npp=code, asm=asm_code, m=month)
             with col:
                 st.markdown(f"""<a href="{href}" target="_self" class="npp-card">
-                  <div class="npp-title">{code}</div>
+                  <div class="npp-title">{code} · {get_region(code)}</div>
                   <div class="npp-name">{name_short}</div>
                   <div class="npp-meta">
                     <span class="npp-amt">{fmt(d["total"])}</span>
@@ -337,7 +357,7 @@ def page_sales_npp_list():
             href = card_href("sales_npp", npp=code, asm=asm_code, m=month)
             with col:
                 st.markdown(f"""<a href="{href}" target="_self" class="npp-card">
-                  <div class="npp-title">{code}</div>
+                  <div class="npp-title">{code} · {get_region(code)}</div>
                   <div class="npp-name">{name_short}</div>
                   <div class="npp-meta">
                     <span class="npp-amt">{fmt(d["total"])}</span>
@@ -365,7 +385,7 @@ def page_sales_npp():
 
     asm = npp.get("asm", "")
     asm_name = ASM_FULL.get(asm, asm)
-    st.markdown(f"### {npp['name']}")
+    st.markdown(f"### {npp['name']}  <small style='color:#888;font-size:0.75rem;font-weight:400;'>{get_region(code)}</small>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     c1.metric("ASM", asm_name)
     c2.metric(f"{month}월 합계", fmt(npp["total"]))
