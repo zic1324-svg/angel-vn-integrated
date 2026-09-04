@@ -131,8 +131,16 @@ def card_href(page, **kwargs):
     return f"?{params}"
 
 def back_button(label, page, **kwargs):
-    if st.button(f"← {label}", key=f"back_{page}"):
-        set_state(page, **kwargs)
+    params = {"p": page}
+    if "asm"   in kwargs: params["asm"] = kwargs["asm"]
+    if "npp"   in kwargs: params["npp"] = kwargs["npp"]
+    if "month" in kwargs: params["m"]   = str(kwargs["month"])
+    query = "&".join(f"{k}={v}" for k, v in params.items())
+    st.markdown(
+        f'<a href="?{query}" target="_self" style="display:inline-block;margin-bottom:12px;'
+        f'font-size:0.9rem;color:#888;text-decoration:none;">← {label}</a>',
+        unsafe_allow_html=True,
+    )
 
 def month_selector(current_month):
     available = sorted([int(k) for k in records.keys() if k.isdigit()])
