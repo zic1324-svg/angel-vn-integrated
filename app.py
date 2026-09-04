@@ -122,7 +122,7 @@ def fmt(n):
     return f"{n/1_000_000:.2f}Tr"
 
 def link(href, cls, content):
-    return f'<a href="{href}" class="{cls}">{content}</a>'
+    return f'<a href="{href}" target="_self" class="{cls}">{content}</a>'
 
 def card_href(page, **kwargs):
     params = f"p={page}"
@@ -179,19 +179,19 @@ def page_home():
     c1, c2, c3 = st.columns(3)
     month = state["month"]
     with c1:
-        st.markdown(f"""<a href="{card_href('npp_inventory', m=month)}" class="home-card">
+        st.markdown(f"""<a href="{card_href('npp_inventory', m=month)}" target="_self" class="home-card">
           <div class="home-icon">🏪</div>
           <div class="home-title">NPP별 재고관리</div>
           <div class="home-desc">NPP 재고 현황 및 관리</div>
         </a>""", unsafe_allow_html=True)
     with c2:
-        st.markdown(f"""<a href="{card_href('asm_saleout', m=month)}" class="home-card">
+        st.markdown(f"""<a href="{card_href('asm_saleout', m=month)}" target="_self" class="home-card">
           <div class="home-icon">📈</div>
           <div class="home-title">ASM별 세일아웃관리</div>
           <div class="home-desc">ASM 담당 NPP 세일아웃 현황</div>
         </a>""", unsafe_allow_html=True)
     with c3:
-        st.markdown(f"""<a href="{card_href('sales_asm', m=month)}" class="home-card">
+        st.markdown(f"""<a href="{card_href('sales_asm', m=month)}" target="_self" class="home-card">
           <div class="home-icon">👤</div>
           <div class="home-title">Sales별 매출관리</div>
           <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
@@ -223,7 +223,7 @@ def _asm_grid(page_target, btn_label, month):
             full_name = ASM_FULL.get(asm_code, asm_code)
             href = card_href(page_target, asm=asm_code, m=month)
             with col:
-                st.markdown(f"""<a href="{href}" class="asm-card">
+                st.markdown(f"""<a href="{href}" target="_self" class="asm-card">
                   <div class="asm-name">{full_name}</div>
                   <div class="asm-sub">NPP {data['npps']}개 · 세일즈맨 {len(data['salesmen'])}명</div>
                   <div class="asm-amt">{fmt(data['total'])}</div>
@@ -269,7 +269,7 @@ def page_asm_npp_list():
             name_short = d["name"][:38] + ("…" if len(d["name"]) > 38 else "")
             href = card_href("sales_npp", npp=code, asm=asm_code, m=month)
             with col:
-                st.markdown(f"""<a href="{href}" class="npp-card">
+                st.markdown(f"""<a href="{href}" target="_self" class="npp-card">
                   <div class="npp-title">{code}</div>
                   <div class="npp-name">{name_short}</div>
                   <div class="npp-meta">
@@ -313,7 +313,7 @@ def page_sales_npp_list():
             name_short = d["name"][:38] + ("…" if len(d["name"]) > 38 else "")
             href = card_href("sales_npp", npp=code, asm=asm_code, m=month)
             with col:
-                st.markdown(f"""<a href="{href}" class="npp-card">
+                st.markdown(f"""<a href="{href}" target="_self" class="npp-card">
                   <div class="npp-title">{code}</div>
                   <div class="npp-name">{name_short}</div>
                   <div class="npp-meta">
