@@ -12,25 +12,27 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-  .block-container { padding-top: 1.2rem; padding-bottom: 1rem; }
+  .block-container { padding-top: 0.5rem; padding-bottom: 1rem; }
 
-  /* 홈 카드 */
-  .home-card {
-    background: var(--secondary-background-color);
-    border: 1px solid rgba(128,128,128,0.2);
-    border-radius: 16px;
-    padding: 40px 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    min-height: 200px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
+  /* 홈 카드 버튼 스타일 */
+  div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] .stButton button {
+    min-height: 220px !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(128,128,128,0.25) !important;
+    background: var(--secondary-background-color) !important;
+    white-space: pre-wrap !important;
+    font-size: 1rem !important;
+    line-height: 2 !important;
+    transition: all 0.2s !important;
+    padding: 24px !important;
+    width: 100% !important;
   }
-  .home-card:hover { border-color: #4A9EFF; box-shadow: 0 4px 16px rgba(74,158,255,0.25); transform: translateY(-2px); }
-  .home-icon { font-size: 3rem; margin-bottom: 16px; }
-  .home-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
-  .home-desc  { font-size: 0.85rem; color: #888; }
+  div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] .stButton button:hover {
+    border-color: #4A9EFF !important;
+    box-shadow: 0 4px 16px rgba(74,158,255,0.25) !important;
+    transform: translateY(-2px) !important;
+    color: #4A9EFF !important;
+  }
 
   /* NPP / ASM 카드 */
   .npp-card {
@@ -166,35 +168,20 @@ def sparkline_svg(values, width=120, height=32, color="#4A9EFF"):
 # ────────────────────────────────────────────────────────────────────
 
 def page_home():
-    st.markdown("## 📊 엔젤베트남 영업 통합관리")
+    st.markdown("### 📊 엔젤베트남 영업 통합관리")
     st.markdown("---")
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.markdown("""
-        <div class="home-card">
-          <div class="home-icon">🏪</div>
-          <div class="home-title">NPP별 재고관리</div>
-          <div class="home-desc">NPP 재고 현황 및 관리</div>
-        </div>""", unsafe_allow_html=True)
-        if st.button("NPP 재고관리 →", key="btn_npp", use_container_width=True):
+        if st.button("🏪\n\nNPP별 재고관리\n\nNPP 재고 현황 및 관리",
+                     key="btn_npp", use_container_width=True):
             go("npp_inventory")
     with c2:
-        st.markdown("""
-        <div class="home-card">
-          <div class="home-icon">📈</div>
-          <div class="home-title">ASM별 세일아웃관리</div>
-          <div class="home-desc">ASM 담당 NPP 세일아웃 현황</div>
-        </div>""", unsafe_allow_html=True)
-        if st.button("ASM 세일아웃관리 →", key="btn_asm", use_container_width=True):
+        if st.button("📈\n\nASM별 세일아웃관리\n\nASM 담당 NPP 세일아웃 현황",
+                     key="btn_asm", use_container_width=True):
             go("asm_saleout")
     with c3:
-        st.markdown("""
-        <div class="home-card">
-          <div class="home-icon">👤</div>
-          <div class="home-title">Sales별 매출관리</div>
-          <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
-        </div>""", unsafe_allow_html=True)
-        if st.button("Sales 매출관리 →", key="btn_sales", use_container_width=True):
+        if st.button("👤\n\nSales별 매출관리\n\n세일즈맨 SKU별 실적 및 월별 추이",
+                     key="btn_sales", use_container_width=True):
             go("sales_asm")
 
 
