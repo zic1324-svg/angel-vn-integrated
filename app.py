@@ -40,10 +40,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── 상수 ────────────────────────────────────────────────────────────
-TOKEN    = st.secrets.get("GIST_TOKEN", "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")
-GIST_ID  = st.secrets.get("GIST_ID",   "3e02c404603ba04dca00c1c925211cba")
+TOKEN    = st.secrets["GIST_TOKEN"]
+GIST_ID  = st.secrets["GIST_ID"]
 FILENAME = "integrated_records.json"
-APP_PASS = st.secrets.get("APP_PASSWORD", "angel2026")
+APP_PASS = st.secrets["APP_PASSWORD"]
 LOCAL_DATA = Path(__file__).parent / "data" / "integrated_records.json"
 
 SKU_LIST = ["BS VÀ HMP CŨ", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỬA TẮM"]
