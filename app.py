@@ -71,11 +71,11 @@ def load_data():
                      "Accept": "application/vnd.github.v3+json"})
         g = json.loads(urllib.request.urlopen(req, timeout=10).read())
         content = g["files"][FILENAME]["content"]
-        return json.loads(content) if content else {}
-    except Exception:
+        return json.loads(content) if content else {}, None
+    except Exception as e:
         if LOCAL_DATA.exists():
-            return json.loads(LOCAL_DATA.read_text(encoding="utf-8"))
-        return {}
+            return json.loads(LOCAL_DATA.read_text(encoding="utf-8")), None
+        return {}, str(e)
 
 # ── 세션 상태 초기화 ─────────────────────────────────────────────────
 if "auth" not in st.session_state:
@@ -103,7 +103,9 @@ if not st.session_state.auth:
     st.stop()
 
 # ── 데이터 로드 ──────────────────────────────────────────────────────
-records = load_data()
+records, load_error = load_data()
+if load_error:
+    st.error(f"데이터 로드 실패: {load_error}")
 
 # ── 스파크라인 SVG ───────────────────────────────────────────────────
 def sparkline_svg(values, width=120, height=32, color="#4A9EFF"):
@@ -218,7 +220,7 @@ def page_detail():
 def page_main():
     # 헤더
     c_title, c_month, c_asm, c_search = st.columns([3, 1.5, 1.5, 2])
-    c_title.markdown("## 📊 엔젤베트남 영업통합관리")
+    c_title.markdown("**📊 엔젤베트남 영업통합관리**")
 
     available_months = sorted([int(k) for k in records.keys() if k.isdigit()])
     if not available_months:
