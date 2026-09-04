@@ -43,7 +43,6 @@ st.markdown("""
 TOKEN    = st.secrets["GIST_TOKEN"]
 GIST_ID  = st.secrets["GIST_ID"]
 FILENAME = "integrated_records.json"
-APP_PASS = st.secrets["APP_PASSWORD"]
 LOCAL_DATA = Path(__file__).parent / "data" / "integrated_records.json"
 
 SKU_LIST = ["BS VÀ HMP CŨ", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỬA TẮM"]
@@ -78,29 +77,12 @@ def load_data():
         return {}, str(e)
 
 # ── 세션 상태 초기화 ─────────────────────────────────────────────────
-if "auth" not in st.session_state:
-    st.session_state.auth = False
 if "page" not in st.session_state:
     st.session_state.page = "main"
 if "selected_npp" not in st.session_state:
     st.session_state.selected_npp = None
 if "month" not in st.session_state:
     st.session_state.month = 8
-
-# ── 로그인 ───────────────────────────────────────────────────────────
-if not st.session_state.auth:
-    st.title("📊 엔젤베트남 영업 통합관리")
-    st.markdown("---")
-    col = st.columns([1, 2, 1])[1]
-    with col:
-        pw = st.text_input("비밀번호", type="password")
-        if st.button("로그인", use_container_width=True):
-            if pw == APP_PASS:
-                st.session_state.auth = True
-                st.rerun()
-            else:
-                st.error("비밀번호가 틀렸습니다.")
-    st.stop()
 
 # ── 데이터 로드 ──────────────────────────────────────────────────────
 records, load_error = load_data()
