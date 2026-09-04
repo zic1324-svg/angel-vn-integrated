@@ -14,52 +14,27 @@ st.markdown("""
 <style>
   .block-container { padding-top: 3rem !important; padding-bottom: 1rem; }
 
-  /* 카드가 있는 컬럼: 상대 위치 기준 */
-  [data-testid="stColumn"]:has(.home-card),
-  [data-testid="stColumn"]:has(.npp-card),
-  [data-testid="stColumn"]:has(.asm-card) { position: relative; }
+  a { text-decoration: none !important; color: inherit !important; }
 
-  /* 투명 버튼을 카드 위에 덮어씌워서 전체 클릭 가능하게 */
-  [data-testid="stColumn"]:has(.home-card) .stButton,
-  [data-testid="stColumn"]:has(.npp-card) .stButton,
-  [data-testid="stColumn"]:has(.asm-card) .stButton {
-    position: absolute !important;
-    top: 0 !important; left: 0 !important;
-    width: 100% !important; height: 100% !important;
-    z-index: 10 !important; margin: 0 !important; padding: 0 !important;
-  }
-  [data-testid="stColumn"]:has(.home-card) .stButton button,
-  [data-testid="stColumn"]:has(.npp-card) .stButton button,
-  [data-testid="stColumn"]:has(.asm-card) .stButton button {
-    width: 100% !important; height: 100% !important;
-    background: transparent !important; border: none !important;
-    box-shadow: none !important; color: transparent !important;
-    font-size: 0 !important; cursor: pointer !important;
-  }
-  [data-testid="stColumn"]:has(.home-card) .stButton button:hover,
-  [data-testid="stColumn"]:has(.npp-card) .stButton button:hover,
-  [data-testid="stColumn"]:has(.asm-card) .stButton button:hover {
-    background: transparent !important;
-  }
-
-  /* 홈 카드 */
   .home-card {
     background: var(--secondary-background-color);
     border: 1px solid rgba(128,128,128,0.2);
     border-radius: 16px; padding: 40px 24px; text-align: center;
-    cursor: pointer; transition: all 0.2s; min-height: 200px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 220px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
   }
   .home-card:hover { border-color: #4A9EFF; box-shadow: 0 4px 16px rgba(74,158,255,0.25); }
-  .home-icon  { font-size: 3rem; margin-bottom: 12px; }
+  .home-icon  { font-size: 3rem; margin-bottom: 14px; }
   .home-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
   .home-desc  { font-size: 0.83rem; color: #888; }
 
-  /* NPP 카드 */
   .npp-card {
     background: var(--secondary-background-color);
     border: 1px solid rgba(128,128,128,0.2);
-    border-radius: 10px; padding: 16px; height: 130px; cursor: pointer;
+    border-radius: 10px; padding: 16px; min-height: 130px;
+    cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
+    display: block;
   }
   .npp-card:hover { border-color: #4A9EFF; box-shadow: 0 2px 8px rgba(74,158,255,0.2); }
   .npp-title { font-size: 0.78rem; color: #888; margin-bottom: 4px; font-family: monospace; }
@@ -71,16 +46,16 @@ st.markdown("""
                padding: 2px 8px; border-radius: 20px; }
   .npp-amt   { font-size: 1.0rem; font-weight: 700; color: #4A9EFF; }
 
-  /* ASM 카드 */
   .asm-card {
     background: var(--secondary-background-color);
     border: 1px solid rgba(128,128,128,0.2);
     border-radius: 12px; padding: 20px; text-align: center;
-    min-height: 120px; cursor: pointer;
+    min-height: 130px; cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s; display: block;
   }
   .asm-card:hover { border-color: #4A9EFF; box-shadow: 0 2px 8px rgba(74,158,255,0.2); }
   .asm-name { font-size: 1.0rem; font-weight: 700; margin-bottom: 6px; }
-  .asm-sub  { font-size: 0.8rem; color: #888; }
+  .asm-sub  { font-size: 0.8rem; color: #888; line-height: 1.6; }
   .asm-amt  { font-size: 1.1rem; font-weight: 700; color: #4A9EFF; margin-top: 8px; }
 
   hr.divider { border: none; border-top: 1px solid rgba(128,128,128,0.2); margin: 8px 0; }
@@ -122,13 +97,25 @@ records, load_error = load_data()
 if load_error:
     st.error(f"데이터 로드 실패: {load_error}")
 
-# ── 세션 상태 초기화 ─────────────────────────────────────────────────
-def init_state():
-    defaults = {"page": "home", "selected_asm": None, "selected_npp": None, "month": 8}
-    for k, v in defaults.items():
-        if k not in st.session_state:
-            st.session_state[k] = v
-init_state()
+# ── 쿼리 파라미터로 상태 관리 ─────────────────────────────────────────
+def get_state():
+    p = st.query_params
+    return {
+        "page":         p.get("p", "home"),
+        "selected_asm": p.get("asm", None),
+        "selected_npp": p.get("npp", None),
+        "month":        int(p.get("m", 8)),
+    }
+
+def set_state(page, **kwargs):
+    params = {"p": page}
+    if "asm" in kwargs:     params["asm"] = kwargs["asm"]
+    if "npp" in kwargs:     params["npp"] = kwargs["npp"]
+    if "month" in kwargs:   params["m"] = str(kwargs["month"])
+    st.query_params.update(params)
+    st.rerun()
+
+state = get_state()
 
 # ── 유틸 ────────────────────────────────────────────────────────────
 def fmt(n):
@@ -136,24 +123,31 @@ def fmt(n):
     if n >= 1_000_000:     return f"{n/1e6:.1f}M"
     return f"{n:,.0f}"
 
-def go(page, **kwargs):
-    st.session_state.page = page
-    for k, v in kwargs.items():
-        st.session_state[k] = v
-    st.rerun()
+def link(href, cls, content):
+    return f'<a href="{href}" class="{cls}">{content}</a>'
 
-def month_selector():
+def card_href(page, **kwargs):
+    params = f"p={page}"
+    for k, v in kwargs.items():
+        params += f"&{k}={v}"
+    return f"?{params}"
+
+def back_button(label, page, **kwargs):
+    if st.button(f"← {label}", key=f"back_{page}"):
+        set_state(page, **kwargs)
+
+def month_selector(current_month):
     available = sorted([int(k) for k in records.keys() if k.isdigit()])
     if not available:
         return None
-    idx = available.index(st.session_state.month) if st.session_state.month in available else len(available)-1
+    idx = available.index(current_month) if current_month in available else len(available)-1
     m = st.selectbox("월", available, index=idx, format_func=lambda x: f"{x}월", key="month_sel")
-    st.session_state.month = m
+    if m != current_month:
+        new_params = dict(st.query_params)
+        new_params["m"] = str(m)
+        st.query_params.update(new_params)
+        st.rerun()
     return m
-
-def back_button(label, target, **kwargs):
-    if st.button(f"← {label}", key=f"back_{target}"):
-        go(target, **kwargs)
 
 def sparkline_svg(values, width=120, height=32, color="#4A9EFF"):
     vals = list(values)
@@ -179,38 +173,31 @@ def sparkline_svg(values, width=120, height=32, color="#4A9EFF"):
         f'</svg>'
     )
 
-# ────────────────────────────────────────────────────────────────────
-# 페이지 함수들
-# ────────────────────────────────────────────────────────────────────
+# ── 페이지 함수들 ────────────────────────────────────────────────────
 
 def page_home():
     st.markdown("### 📊 엔젤베트남 영업 통합관리")
     st.markdown("---")
     c1, c2, c3 = st.columns(3)
+    month = state["month"]
     with c1:
-        st.markdown("""<div class="home-card">
+        st.markdown(f"""<a href="{card_href('npp_inventory', m=month)}" class="home-card">
           <div class="home-icon">🏪</div>
           <div class="home-title">NPP별 재고관리</div>
           <div class="home-desc">NPP 재고 현황 및 관리</div>
-        </div>""", unsafe_allow_html=True)
-        if st.button("_", key="btn_npp", use_container_width=True):
-            go("npp_inventory")
+        </a>""", unsafe_allow_html=True)
     with c2:
-        st.markdown("""<div class="home-card">
+        st.markdown(f"""<a href="{card_href('asm_saleout', m=month)}" class="home-card">
           <div class="home-icon">📈</div>
           <div class="home-title">ASM별 세일아웃관리</div>
           <div class="home-desc">ASM 담당 NPP 세일아웃 현황</div>
-        </div>""", unsafe_allow_html=True)
-        if st.button("_", key="btn_asm", use_container_width=True):
-            go("asm_saleout")
+        </a>""", unsafe_allow_html=True)
     with c3:
-        st.markdown("""<div class="home-card">
+        st.markdown(f"""<a href="{card_href('sales_asm', m=month)}" class="home-card">
           <div class="home-icon">👤</div>
           <div class="home-title">Sales별 매출관리</div>
           <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
-        </div>""", unsafe_allow_html=True)
-        if st.button("_", key="btn_sales", use_container_width=True):
-            go("sales_asm")
+        </a>""", unsafe_allow_html=True)
 
 
 def page_npp_inventory():
@@ -219,19 +206,8 @@ def page_npp_inventory():
     st.info("재고 데이터를 업로드하면 활성화됩니다.")
 
 
-def page_asm_saleout():
-    back_button("홈으로", "home")
-    st.markdown("## 📈 ASM별 세일아웃관리")
-
-    col_m, col_s = st.columns([2, 6])
-    with col_m:
-        month = month_selector()
-    if not month:
-        st.warning("데이터가 없습니다."); return
-
+def _asm_grid(page_target, btn_label, month):
     month_data = records.get(str(month), {})
-
-    # ASM별 집계
     asm_totals = {}
     for code, d in month_data.items():
         asm = d.get("asm", "기타")
@@ -241,44 +217,48 @@ def page_asm_saleout():
         asm_totals[asm]["salesmen"].update(d.get("salesmen", {}).keys())
 
     sorted_asms = sorted(asm_totals.items(), key=lambda x: -x[1]["total"])
-
-    st.markdown("---")
     COLS = 4
     rows = [sorted_asms[i:i+COLS] for i in range(0, len(sorted_asms), COLS)]
     for row in rows:
         cols = st.columns(COLS)
         for col, (asm_code, data) in zip(cols, row):
             full_name = ASM_FULL.get(asm_code, asm_code)
+            href = card_href(page_target, asm=asm_code, m=month)
             with col:
-                st.markdown(f"""
-                <div class="asm-card">
+                st.markdown(f"""<a href="{href}" class="asm-card">
                   <div class="asm-name">{asm_code}</div>
                   <div class="asm-sub">{full_name}</div>
                   <div class="asm-sub">NPP {data['npps']}개 · 세일즈맨 {len(data['salesmen'])}명</div>
                   <div class="asm-amt">{fmt(data['total'])}</div>
-                </div>""", unsafe_allow_html=True)
-                if st.button("상세보기", key=f"asm_{asm_code}", use_container_width=True):
-                    go("asm_npp_list", selected_asm=asm_code)
+                </a>""", unsafe_allow_html=True)
+
+
+def page_asm_saleout():
+    back_button("홈으로", "home")
+    st.markdown("## 📈 ASM별 세일아웃관리")
+    col_m, _ = st.columns([2, 6])
+    with col_m:
+        month = month_selector(state["month"])
+    if not month: return
+    st.markdown("---")
+    _asm_grid("asm_npp_list", "상세보기", month)
 
 
 def page_asm_npp_list():
-    st.markdown(f'<div class="breadcrumb">홈 › ASM 세일아웃관리</div>', unsafe_allow_html=True)
-    back_button("ASM 목록으로", "asm_saleout")
-
-    asm_code = st.session_state.selected_asm
+    asm_code = state["selected_asm"]
+    month    = state["month"]
+    back_button("ASM 목록으로", "asm_saleout", month=month)
     full_name = ASM_FULL.get(asm_code, asm_code)
-
-    col_m, col_t = st.columns([2, 6])
+    col_m, _ = st.columns([2, 6])
     with col_m:
-        month = month_selector()
-    if not month:
-        return
+        month = month_selector(month)
+    if not month: return
 
     month_data = records.get(str(month), {})
     filtered = {k: v for k, v in month_data.items() if v.get("asm") == asm_code}
+    total = sum(d["total"] for d in filtered.values())
 
     st.markdown(f"### {asm_code} — {full_name}")
-    total = sum(d["total"] for d in filtered.values())
     k1, k2 = st.columns(2)
     k1.metric("NPP 수", f"{len(filtered)}개")
     k2.metric(f"{month}월 합계", fmt(total))
@@ -286,79 +266,42 @@ def page_asm_npp_list():
 
     sorted_npps = sorted(filtered.items(), key=lambda x: -x[1]["total"])
     COLS = 4
-    rows = [sorted_npps[i:i+COLS] for i in range(0, len(sorted_npps), COLS)]
-    for row in rows:
+    for row in [sorted_npps[i:i+COLS] for i in range(0, len(sorted_npps), COLS)]:
         cols = st.columns(COLS)
         for col, (code, d) in zip(cols, row):
             name_short = d["name"][:38] + ("…" if len(d["name"]) > 38 else "")
+            href = card_href("sales_npp", npp=code, asm=asm_code, m=month)
             with col:
-                st.markdown(f"""
-                <div class="npp-card">
+                st.markdown(f"""<a href="{href}" class="npp-card">
                   <div class="npp-title">{code}</div>
                   <div class="npp-name">{name_short}</div>
                   <div class="npp-meta">
                     <span class="npp-asm">{asm_code}</span>
                     <span class="npp-amt">{fmt(d["total"])}</span>
                   </div>
-                </div>""", unsafe_allow_html=True)
-                if st.button("상세보기", key=f"anpp_{code}", use_container_width=True):
-                    go("sales_npp", selected_npp=code)
+                </a>""", unsafe_allow_html=True)
 
 
 def page_sales_asm():
     back_button("홈으로", "home")
     st.markdown("## 👤 Sales별 매출관리")
-
     col_m, _ = st.columns([2, 6])
     with col_m:
-        month = month_selector()
-    if not month:
-        st.warning("데이터가 없습니다."); return
-
-    month_data = records.get(str(month), {})
-
-    # ASM별 집계
-    asm_totals = {}
-    for code, d in month_data.items():
-        asm = d.get("asm", "기타")
-        asm_totals.setdefault(asm, {"total": 0, "npps": 0, "salesmen": set()})
-        asm_totals[asm]["total"] += d.get("total", 0)
-        asm_totals[asm]["npps"] += 1
-        asm_totals[asm]["salesmen"].update(d.get("salesmen", {}).keys())
-
-    sorted_asms = sorted(asm_totals.items(), key=lambda x: -x[1]["total"])
-
+        month = month_selector(state["month"])
+    if not month: return
     st.markdown("---")
-    COLS = 4
-    rows = [sorted_asms[i:i+COLS] for i in range(0, len(sorted_asms), COLS)]
-    for row in rows:
-        cols = st.columns(COLS)
-        for col, (asm_code, data) in zip(cols, row):
-            full_name = ASM_FULL.get(asm_code, asm_code)
-            with col:
-                st.markdown(f"""
-                <div class="asm-card">
-                  <div class="asm-name">{asm_code}</div>
-                  <div class="asm-sub">{full_name}</div>
-                  <div class="asm-sub">NPP {data['npps']}개 · 세일즈맨 {len(data['salesmen'])}명</div>
-                  <div class="asm-amt">{fmt(data['total'])}</div>
-                </div>""", unsafe_allow_html=True)
-                if st.button("ASM 선택", key=f"sasm_{asm_code}", use_container_width=True):
-                    go("sales_npp_list", selected_asm=asm_code)
+    _asm_grid("sales_npp_list", "ASM 선택", month)
 
 
 def page_sales_npp_list():
-    st.markdown(f'<div class="breadcrumb">홈 › Sales 매출관리 › ASM 선택</div>', unsafe_allow_html=True)
-    back_button("ASM 목록으로", "sales_asm")
-
-    asm_code = st.session_state.selected_asm
+    asm_code = state["selected_asm"]
+    month    = state["month"]
+    back_button("ASM 목록으로", "sales_asm", month=month)
     full_name = ASM_FULL.get(asm_code, asm_code)
-
     col_m, _ = st.columns([2, 6])
     with col_m:
-        month = month_selector()
-    if not month:
-        return
+        month = month_selector(month)
+    if not month: return
 
     month_data = records.get(str(month), {})
     filtered = {k: v for k, v in month_data.items() if v.get("asm") == asm_code}
@@ -368,39 +311,34 @@ def page_sales_npp_list():
 
     sorted_npps = sorted(filtered.items(), key=lambda x: -x[1]["total"])
     COLS = 4
-    rows = [sorted_npps[i:i+COLS] for i in range(0, len(sorted_npps), COLS)]
-    for row in rows:
+    for row in [sorted_npps[i:i+COLS] for i in range(0, len(sorted_npps), COLS)]:
         cols = st.columns(COLS)
         for col, (code, d) in zip(cols, row):
             name_short = d["name"][:38] + ("…" if len(d["name"]) > 38 else "")
+            href = card_href("sales_npp", npp=code, asm=asm_code, m=month)
             with col:
-                st.markdown(f"""
-                <div class="npp-card">
+                st.markdown(f"""<a href="{href}" class="npp-card">
                   <div class="npp-title">{code}</div>
                   <div class="npp-name">{name_short}</div>
                   <div class="npp-meta">
                     <span class="npp-asm">{asm_code}</span>
                     <span class="npp-amt">{fmt(d["total"])}</span>
                   </div>
-                </div>""", unsafe_allow_html=True)
-                if st.button("세일즈맨 보기", key=f"snpp_{code}", use_container_width=True):
-                    go("sales_npp", selected_npp=code)
+                </a>""", unsafe_allow_html=True)
 
 
 def page_sales_npp():
-    asm_code = st.session_state.selected_asm
+    asm_code = state["selected_asm"]
+    month    = state["month"]
     prev_page = "sales_npp_list" if asm_code else "sales_asm"
     prev_label = "NPP 목록으로" if asm_code else "ASM 목록으로"
+    back_button(prev_label, prev_page, asm=asm_code, month=month)
 
-    st.markdown(f'<div class="breadcrumb">홈 › Sales 매출관리 › {asm_code or ""} › NPP</div>', unsafe_allow_html=True)
-    back_button(prev_label, prev_page)
-
-    code = st.session_state.selected_npp
+    code = state["selected_npp"]
     col_m, _ = st.columns([2, 6])
     with col_m:
-        month = month_selector()
-    if not month:
-        return
+        month = month_selector(month)
+    if not month: return
 
     month_data = records.get(str(month), {})
     npp = month_data.get(code)
@@ -410,13 +348,11 @@ def page_sales_npp():
     asm = npp.get("asm", "")
     asm_name = ASM_FULL.get(asm, asm)
     st.markdown(f"### {code} — {npp['name']}")
-
     c1, c2, c3 = st.columns(3)
     c1.metric("ASM", f"{asm} ({asm_name})")
     c2.metric(f"{month}월 합계", fmt(npp["total"]))
     c3.metric("세일즈맨 수", len(npp.get("salesmen", {})))
 
-    # SKU 합계
     st.markdown("---")
     sku_totals = {sku: 0 for sku in SKU_LIST}
     for sa_data in npp.get("salesmen", {}).values():
@@ -427,14 +363,13 @@ def page_sales_npp():
     for i, sku in enumerate(SKU_LIST):
         cols[i].metric(sku, fmt(sku_totals[sku]))
 
-    # 세일즈맨 테이블
     st.markdown("---")
     st.markdown("### 세일즈맨별 실적")
     salesmen = npp.get("salesmen", {})
     sorted_sa = sorted(salesmen.items(), key=lambda x: -x[1].get("total", 0))
 
     header = st.columns([3, 1.2, 1.2, 1.2, 1.2, 1.2, 2])
-    for col, label in zip(header, ["세일즈맨", "BS", "GIẶT XẢ", "PPSU", "KHĂN", "SỬA TẮM", "월별추이(1~8월)"]):
+    for col, label in zip(header, ["세일즈맨", "BS", "GIẶT XẢ", "PPSU", "KHĂN", "SỬA TẮM", "1~8월 추이"]):
         col.markdown(f"**{label}**")
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
@@ -469,4 +404,4 @@ PAGE_MAP = {
     "sales_npp_list": page_sales_npp_list,
     "sales_npp":      page_sales_npp,
 }
-PAGE_MAP.get(st.session_state.page, page_home)()
+PAGE_MAP.get(state["page"], page_home)()
