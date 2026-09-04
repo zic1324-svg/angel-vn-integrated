@@ -306,7 +306,7 @@ def page_asm_npp_list():
             href = card_href("sales_npp", npp=code, asm=asm_code, m=month)
             with col:
                 st.markdown(f"""<a href="{href}" target="_self" class="npp-card">
-                  <div class="npp-title">{code} · {get_region(code)}</div>
+                  <div class="npp-title">{code} · {d.get("province") or get_region(code)}</div>
                   <div class="npp-name">{name_short}</div>
                   <div class="npp-meta">
                     <span class="npp-amt">{fmt(d["total"])}</span>
@@ -357,7 +357,7 @@ def page_sales_npp_list():
             href = card_href("sales_npp", npp=code, asm=asm_code, m=month)
             with col:
                 st.markdown(f"""<a href="{href}" target="_self" class="npp-card">
-                  <div class="npp-title">{code} · {get_region(code)}</div>
+                  <div class="npp-title">{code} · {d.get("province") or get_region(code)}</div>
                   <div class="npp-name">{name_short}</div>
                   <div class="npp-meta">
                     <span class="npp-amt">{fmt(d["total"])}</span>
@@ -385,7 +385,8 @@ def page_sales_npp():
 
     asm = npp.get("asm", "")
     asm_name = ASM_FULL.get(asm, asm)
-    st.markdown(f"### {npp['name']}  <small style='color:#888;font-size:0.75rem;font-weight:400;'>{get_region(code)}</small>", unsafe_allow_html=True)
+    province = npp.get("province") or get_region(code)
+    st.markdown(f"### {npp['name']}  <small style='color:#888;font-size:0.75rem;font-weight:400;'>{province}</small>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     c1.metric("ASM", asm_name)
     c2.metric(f"{month}월 합계", fmt(npp["total"]))
