@@ -69,7 +69,7 @@ GIST_ID  = st.secrets["GIST_ID"]
 FILENAME = "integrated_records.json"
 LOCAL_DATA = Path(__file__).parent / "data" / "integrated_records.json"
 
-SKU_LIST = ["BS VÀ HMP CŨ", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỬA TẮM"]
+SKU_LIST = ["BS VÀ HMP CŨ", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
 ASM_FULL = {
     'NHU':'Nguyễn Văn Như','HAI':'Diệp Thế Hải','VINH':'Nguyễn Văn Vịnh',
     'LAM':'Kiều Phú Lâm','QUOC':'Nguyễn Minh Quốc','TU':'Nguyễn Hữu Bảy Tú',
@@ -391,7 +391,7 @@ def page_sales_npp():
         "GIẶT XẢ":      "GIẶT XẢ",
         "PPSU":          "PPSU",
         "KHĂN ƯỚT":     "KHĂN ƯỚT",
-        "SỬA TẮM":      "SỬA TẮM",
+        "SỮA TẮM":      "SỮA TẮM",
     }
 
     col_widths = [2.5] + [1.0] * month + [1.5]
