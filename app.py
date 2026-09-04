@@ -176,27 +176,29 @@ def sparkline_svg(values, width=120, height=32, color="#4A9EFF"):
 def page_home():
     st.markdown("### 📊 엔젤베트남 영업 통합관리")
     st.markdown("---")
-    c1, c2, c3, c4 = st.columns(4)
     month = state["month"]
-    with c1:
+    r1c1, r1c2 = st.columns(2)
+    with r1c1:
         st.markdown(f"""<a href="{card_href('npp_inventory', m=month)}" target="_self" class="home-card">
           <div class="home-icon">🏪</div>
           <div class="home-title">NPP별 재고관리</div>
           <div class="home-desc">NPP 재고 현황 및 관리</div>
         </a>""", unsafe_allow_html=True)
-    with c2:
+    with r1c2:
         st.markdown(f"""<a href="{card_href('asm_saleout', m=month)}" target="_self" class="home-card">
           <div class="home-icon">📈</div>
           <div class="home-title">ASM별 세일아웃관리</div>
           <div class="home-desc">ASM 담당 NPP 세일아웃 현황</div>
         </a>""", unsafe_allow_html=True)
-    with c3:
+    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+    r2c1, r2c2 = st.columns(2)
+    with r2c1:
         st.markdown(f"""<a href="{card_href('sales_asm', m=month)}" target="_self" class="home-card">
           <div class="home-icon">👤</div>
           <div class="home-title">Sales별 매출관리</div>
           <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
         </a>""", unsafe_allow_html=True)
-    with c4:
+    with r2c2:
         st.markdown(f"""<a href="{card_href('asm_meetings')}" target="_self" class="home-card">
           <div class="home-icon">📋</div>
           <div class="home-title">ASM 회의보고</div>
