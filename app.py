@@ -29,22 +29,30 @@ st.markdown("""
   .home-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
   .home-desc  { font-size: 0.83rem; color: #888; }
 
-  .npp-card {
+  .npp-card-wrap {
     background: var(--secondary-background-color);
     border: 1px solid rgba(128,128,128,0.2);
-    border-radius: 10px; padding: 16px; min-height: 130px;
-    cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
-    display: block;
+    border-radius: 10px; overflow: hidden; min-height: 130px;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .npp-card:hover { border-color: #4A9EFF; box-shadow: 0 2px 8px rgba(74,158,255,0.2); }
+  .npp-card-wrap:hover { border-color: rgba(74,158,255,0.4); box-shadow: 0 2px 8px rgba(74,158,255,0.1); }
+  .npp-card-hdr { padding: 14px 14px 10px; }
+  .npp-card-body { display: flex; border-top: 1px solid rgba(128,128,128,0.15); }
   .npp-title { font-size: 0.78rem; color: #888; margin-bottom: 4px; font-family: monospace; }
-  .npp-name  { font-size: 0.9rem; font-weight: 600; line-height: 1.3; margin-bottom: 8px;
+  .npp-name  { font-size: 0.9rem; font-weight: 600; line-height: 1.3;
                overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2;
                -webkit-box-orient: vertical; }
-  .npp-meta  { display: flex; justify-content: space-between; align-items: center; }
-  .npp-asm   { font-size: 0.75rem; background: #1E3A5F; color: #7EB8FF;
-               padding: 2px 8px; border-radius: 20px; }
-  .npp-amt   { font-size: 1.0rem; font-weight: 700; color: #4A9EFF; }
+  .npp-half {
+    flex: 1; padding: 10px 14px; display: block;
+    transition: background 0.15s; cursor: pointer;
+  }
+  .npp-half:hover { background: rgba(74,158,255,0.08); }
+  .npp-half-left  { border-right: 1px solid rgba(128,128,128,0.15); }
+  .npp-half-lbl   { font-size: 0.72rem; color: #888; margin-bottom: 4px; }
+  .npp-half-amt   { font-size: 1.0rem; font-weight: 700; color: #4A9EFF; }
+  .npp-half-inv   { color: #52c41a; }
+  .npp-half-months      { font-size: 0.75rem; color: #888;    margin-top: 3px; }
+  .npp-half-months-warn { font-size: 0.75rem; color: #ff7875; margin-top: 3px; font-weight: 600; }
 
   .asm-card {
     background: var(--secondary-background-color);
@@ -60,14 +68,27 @@ st.markdown("""
 
   hr.divider { border: none; border-top: 1px solid rgba(128,128,128,0.2); margin: 8px 0; }
   .breadcrumb { font-size: 0.82rem; color: #888; margin-bottom: 4px; }
+
+  .home-fab {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: #4A9EFF; color: #fff !important;
+    border-radius: 50px; padding: 10px 18px;
+    font-size: 0.85rem; font-weight: 700;
+    box-shadow: 0 4px 14px rgba(74,158,255,0.45);
+    transition: background 0.2s, box-shadow 0.2s;
+    text-decoration: none !important;
+  }
+  .home-fab:hover { background: #2f86f0; box-shadow: 0 6px 18px rgba(74,158,255,0.55); }
 </style>
 """, unsafe_allow_html=True)
 
 # ── 상수 ────────────────────────────────────────────────────────────
-TOKEN    = st.secrets["GIST_TOKEN"]
-GIST_ID  = st.secrets["GIST_ID"]
-FILENAME = "integrated_records.json"
-LOCAL_DATA = Path(__file__).parent / "data" / "integrated_records.json"
+TOKEN        = st.secrets["GIST_TOKEN"]
+GIST_ID      = st.secrets["GIST_ID"]
+FILENAME     = "integrated_records.json"
+INV_FILENAME = "inventory_records.json"
+LOCAL_DATA   = Path(__file__).parent / "data" / "integrated_records.json"
+LOCAL_INV    = Path(__file__).parent / "data" / "inventory_records.json"
 
 SKU_LIST = ["BS VÀ HMP CŨ", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
 
@@ -101,19 +122,30 @@ MONTHS = list(range(1, 13))
 @st.cache_data(ttl=300)
 def load_data():
     try:
+        headers = {"Authorization": f"token {TOKEN}",
+                   "Accept": "application/vnd.github.v3+json"}
         req = urllib.request.Request(
-            f"https://api.github.com/gists/{GIST_ID}",
-            headers={"Authorization": f"token {TOKEN}",
-                     "Accept": "application/vnd.github.v3+json"})
+            f"https://api.github.com/gists/{GIST_ID}", headers=headers)
         g = json.loads(urllib.request.urlopen(req, timeout=10).read())
-        content = g["files"][FILENAME]["content"]
-        return json.loads(content) if content else {}, None
-    except Exception as e:
-        if LOCAL_DATA.exists():
-            return json.loads(LOCAL_DATA.read_text(encoding="utf-8")), None
-        return {}, str(e)
+        files = g.get("files", {})
 
-records, load_error = load_data()
+        def parse(fname):
+            f = files.get(fname, {})
+            if f.get("truncated"):
+                raw = urllib.request.Request(f["raw_url"], headers=headers)
+                return json.loads(urllib.request.urlopen(raw, timeout=15).read())
+            c = f.get("content", "")
+            return json.loads(c) if c else {}
+
+        return parse(FILENAME), parse(INV_FILENAME), None
+    except Exception as e:
+        saleout = json.loads(LOCAL_DATA.read_text(encoding="utf-8")) if LOCAL_DATA.exists() else {}
+        inv     = json.loads(LOCAL_INV.read_text(encoding="utf-8"))  if LOCAL_INV.exists()  else {}
+        if saleout:
+            return saleout, inv, None
+        return {}, {}, str(e)
+
+records, inv_records, load_error = load_data()
 if load_error:
     st.error(f"데이터 로드 실패: {load_error}")
 
@@ -125,6 +157,7 @@ def get_state():
         "selected_asm": p.get("asm", None),
         "selected_npp": p.get("npp", None),
         "month":        int(p.get("m", 8)),
+        "src":          p.get("src", "asm"),
     }
 
 def set_state(page, **kwargs):
@@ -140,6 +173,14 @@ state = get_state()
 # ── 유틸 ────────────────────────────────────────────────────────────
 def fmt(n):
     return f"{n/1_000_000:.2f}Tr"
+
+def fmt_ty(n):
+    return f"{n/1_000_000_000:.2f}Tỷ"
+
+def fmt_inv(n):
+    if n >= 1_000_000_000:
+        return fmt_ty(n)
+    return fmt(n)
 
 def link(href, cls, content):
     return f'<a href="{href}" target="_self" class="{cls}">{content}</a>'
@@ -205,28 +246,14 @@ def page_home():
     st.markdown("### 📊 엔젤베트남 영업 통합관리")
     st.markdown("---")
     month = state["month"]
-    r1c1, r1c2 = st.columns(2)
-    with r1c1:
-        st.markdown(f"""<a href="{card_href('npp_inventory', m=month)}" target="_self" class="home-card">
-          <div class="home-icon">🏪</div>
-          <div class="home-title">NPP별 재고관리</div>
-          <div class="home-desc">NPP 재고 현황 및 관리</div>
-        </a>""", unsafe_allow_html=True)
-    with r1c2:
-        st.markdown(f"""<a href="{card_href('asm_saleout', m=month)}" target="_self" class="home-card">
-          <div class="home-icon">📈</div>
-          <div class="home-title">ASM별 세일아웃관리</div>
-          <div class="home-desc">ASM 담당 NPP 세일아웃 현황</div>
-        </a>""", unsafe_allow_html=True)
-    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
-    r2c1, r2c2 = st.columns(2)
-    with r2c1:
+    c1, c2 = st.columns(2)
+    with c1:
         st.markdown(f"""<a href="{card_href('sales_asm', m=month)}" target="_self" class="home-card">
-          <div class="home-icon">👤</div>
-          <div class="home-title">Sales별 매출관리</div>
+          <div class="home-icon">🗂️</div>
+          <div class="home-title">NPP 통합관리</div>
           <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
         </a>""", unsafe_allow_html=True)
-    with r2c2:
+    with c2:
         st.markdown(f"""<a href="{card_href('asm_meetings')}" target="_self" class="home-card">
           <div class="home-icon">📋</div>
           <div class="home-title">ASM 회의보고</div>
@@ -262,7 +289,7 @@ def _asm_grid(page_target, btn_label, month):
                 st.markdown(f"""<a href="{href}" target="_self" class="asm-card">
                   <div class="asm-name">{full_name}</div>
                   <div class="asm-sub">NPP {data['npps']}개 · 세일즈맨 {len(data['salesmen'])}명</div>
-                  <div class="asm-amt">{fmt(data['total'])}</div>
+                  <div class="asm-amt">{fmt_ty(data['total'])}</div>
                 </a>""", unsafe_allow_html=True)
 
 
@@ -303,15 +330,42 @@ def page_asm_npp_list():
         cols = st.columns(COLS)
         for col, (code, d) in zip(cols, row):
             name_short = d["name"][:38] + ("…" if len(d["name"]) > 38 else "")
-            href = card_href("sales_npp", npp=code, asm=asm_code, m=month)
+            href_so  = card_href("sales_npp", npp=code, asm=asm_code, m=month)
+            href_inv = card_href("npp_stock",  npp=code, asm=asm_code, m=month, src="asm")
+            npp_inv_amt = sum(
+                s.get("amt", 0)
+                for s in inv_records.get(str(month), {}).get(code, {}).values()
+            )
+            inv_str = fmt_inv(npp_inv_amt) if npp_inv_amt > 0 else "-"
+            saleout_total = d["total"]
+            if npp_inv_amt > 0 and saleout_total > 0:
+                months_val = npp_inv_amt / saleout_total
+                months_str = f"{months_val:.1f}개월"
+                months_cls = "npp-half-months-warn" if months_val > 6 else "npp-half-months"
+            elif npp_inv_amt > 0:
+                months_str = "∞"
+                months_cls = "npp-half-months-warn"
+            else:
+                months_str = ""
+                months_cls = "npp-half-months"
             with col:
-                st.markdown(f"""<a href="{href}" target="_self" class="npp-card">
-                  <div class="npp-title">{code} · {d.get("province") or get_region(code)}</div>
-                  <div class="npp-name">{name_short}</div>
-                  <div class="npp-meta">
-                    <span class="npp-amt">{fmt(d["total"])}</span>
+                st.markdown(f"""<div class="npp-card-wrap">
+                  <div class="npp-card-hdr">
+                    <div class="npp-title">{code} · {d.get("province") or get_region(code)}</div>
+                    <div class="npp-name">{name_short}</div>
                   </div>
-                </a>""", unsafe_allow_html=True)
+                  <div class="npp-card-body">
+                    <a href="{href_so}" target="_self" class="npp-half npp-half-left">
+                      <div class="npp-half-lbl">Sale out</div>
+                      <div class="npp-half-amt">{fmt_inv(d["total"])}</div>
+                    </a>
+                    <a href="{href_inv}" target="_self" class="npp-half">
+                      <div class="npp-half-lbl">재고금액</div>
+                      <div class="npp-half-amt npp-half-inv">{inv_str}</div>
+                      <div class="{months_cls}">{months_str}</div>
+                    </a>
+                  </div>
+                </div>""", unsafe_allow_html=True)
 
 
 def page_asm_meetings():
@@ -323,7 +377,7 @@ def page_asm_meetings():
 
 def page_sales_asm():
     back_button("홈으로", "home")
-    st.markdown("## 👤 Sales별 매출관리")
+    st.markdown("## 🗂️ ASM 세일아웃")
     col_m, _ = st.columns([2, 6])
     with col_m:
         month = month_selector(state["month"])
@@ -354,15 +408,42 @@ def page_sales_npp_list():
         cols = st.columns(COLS)
         for col, (code, d) in zip(cols, row):
             name_short = d["name"][:38] + ("…" if len(d["name"]) > 38 else "")
-            href = card_href("sales_npp", npp=code, asm=asm_code, m=month)
+            href_so  = card_href("sales_npp", npp=code, asm=asm_code, m=month)
+            href_inv = card_href("npp_stock",  npp=code, asm=asm_code, m=month, src="sales")
+            npp_inv_amt = sum(
+                s.get("amt", 0)
+                for s in inv_records.get(str(month), {}).get(code, {}).values()
+            )
+            inv_str = fmt_inv(npp_inv_amt) if npp_inv_amt > 0 else "-"
+            saleout_total = d["total"]
+            if npp_inv_amt > 0 and saleout_total > 0:
+                months_val = npp_inv_amt / saleout_total
+                months_str = f"{months_val:.1f}개월"
+                months_cls = "npp-half-months-warn" if months_val > 6 else "npp-half-months"
+            elif npp_inv_amt > 0:
+                months_str = "∞"
+                months_cls = "npp-half-months-warn"
+            else:
+                months_str = ""
+                months_cls = "npp-half-months"
             with col:
-                st.markdown(f"""<a href="{href}" target="_self" class="npp-card">
-                  <div class="npp-title">{code} · {d.get("province") or get_region(code)}</div>
-                  <div class="npp-name">{name_short}</div>
-                  <div class="npp-meta">
-                    <span class="npp-amt">{fmt(d["total"])}</span>
+                st.markdown(f"""<div class="npp-card-wrap">
+                  <div class="npp-card-hdr">
+                    <div class="npp-title">{code} · {d.get("province") or get_region(code)}</div>
+                    <div class="npp-name">{name_short}</div>
                   </div>
-                </a>""", unsafe_allow_html=True)
+                  <div class="npp-card-body">
+                    <a href="{href_so}" target="_self" class="npp-half npp-half-left">
+                      <div class="npp-half-lbl">Sale out</div>
+                      <div class="npp-half-amt">{fmt_inv(d["total"])}</div>
+                    </a>
+                    <a href="{href_inv}" target="_self" class="npp-half">
+                      <div class="npp-half-lbl">재고금액</div>
+                      <div class="npp-half-amt npp-half-inv">{inv_str}</div>
+                      <div class="{months_cls}">{months_str}</div>
+                    </a>
+                  </div>
+                </div>""", unsafe_allow_html=True)
 
 
 def page_sales_npp():
@@ -447,6 +528,90 @@ def page_sales_npp():
         row[-1].markdown(svg, unsafe_allow_html=True)
 
 
+def page_npp_stock():
+    asm_code = state["selected_asm"]
+    month    = state["month"]
+    src      = state.get("src", "asm")
+    code     = state["selected_npp"]
+
+    if src == "sales":
+        back_button("NPP 목록으로", "sales_npp_list", asm=asm_code, month=month)
+    else:
+        back_button("NPP 목록으로", "asm_npp_list", asm=asm_code, month=month)
+
+    month_data = records.get(str(month), {})
+    npp = month_data.get(code, {})
+    name     = npp.get("name", code)
+    province = npp.get("province") or get_region(code)
+
+    st.markdown(
+        f"### {name}  <small style='color:#888;font-size:0.75rem;font-weight:400;'>{province}</small>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(f"<div class='breadcrumb'>{code}</div>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown(f"#### 📦 {month}월 SKU별 재고 현황")
+
+    npp_inv = inv_records.get(str(month), {}).get(code, {})
+    if not npp_inv:
+        st.warning(f"{month}월 재고 데이터가 없습니다. update_integrated.py를 실행해주세요.")
+        return
+
+    hdr = st.columns([2.2, 1.1, 1.4, 1.5])
+    hdr[0].markdown("**SKU**")
+    hdr[1].markdown("**재고수량**")
+    hdr[2].markdown("**재고금액**")
+    hdr[3].markdown("**예상사용월수**")
+    st.markdown('<hr class="divider">', unsafe_allow_html=True)
+
+    total_inv_amt = 0
+    for sku in SKU_LIST:
+        sku_data = npp_inv.get(sku, {})
+        qty = sku_data.get("qty", 0)
+        amt = sku_data.get("amt", 0)
+        total_inv_amt += amt
+
+        # 월평균 세일아웃 계산 (해당 월까지의 비영 월 평균)
+        monthly_sales = []
+        for m in range(1, month + 1):
+            m_npp = records.get(str(m), {}).get(code, {})
+            m_sku_total = sum(
+                sa.get("skus", {}).get(sku, 0)
+                for sa in m_npp.get("salesmen", {}).values()
+            )
+            if m_sku_total > 0:
+                monthly_sales.append(m_sku_total)
+
+        avg_monthly = sum(monthly_sales) / len(monthly_sales) if monthly_sales else 0
+
+        if amt <= 0:
+            months_str = "—"
+            months_color = ""
+        elif avg_monthly <= 0:
+            months_str = "∞"
+            months_color = "color:#ff7875;font-weight:600;"
+        else:
+            ms = amt / avg_monthly
+            months_str = f"{ms:.1f}개월"
+            months_color = "color:#ff7875;font-weight:600;" if ms > 6 else ""
+
+        row = st.columns([2.2, 1.1, 1.4, 1.5])
+        row[0].markdown(sku)
+        row[1].markdown(f"{int(qty):,}" if qty > 0 else "—")
+        row[2].markdown(fmt_inv(amt) if amt > 0 else "—")
+        if months_color:
+            row[3].markdown(f"<span style='{months_color}'>{months_str}</span>", unsafe_allow_html=True)
+        else:
+            row[3].markdown(months_str)
+
+    st.markdown('<hr class="divider">', unsafe_allow_html=True)
+    tot_col = st.columns([2.2, 1.1, 1.4, 1.5])
+    tot_col[0].markdown("**합계**")
+    tot_col[1].markdown("")
+    tot_col[2].markdown(f"**{fmt_inv(total_inv_amt)}**")
+    tot_col[3].markdown("")
+
+
 # ── 라우팅 ───────────────────────────────────────────────────────────
 PAGE_MAP = {
     "home":           page_home,
@@ -457,5 +622,12 @@ PAGE_MAP = {
     "sales_asm":      page_sales_asm,
     "sales_npp_list": page_sales_npp_list,
     "sales_npp":      page_sales_npp,
+    "npp_stock":      page_npp_stock,
 }
+if state["page"] != "home":
+    st.markdown(
+        f'<a href="?p=home&m={state["month"]}" target="_self" class="home-fab">🏠 홈</a>',
+        unsafe_allow_html=True,
+    )
+
 PAGE_MAP.get(state["page"], page_home)()
