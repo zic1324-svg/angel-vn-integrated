@@ -12,36 +12,54 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-  .block-container { padding-top: 0.5rem; padding-bottom: 1rem; }
+  .block-container { padding-top: 3rem !important; padding-bottom: 1rem; }
+
+  /* 카드가 있는 컬럼: 상대 위치 기준 */
+  [data-testid="stColumn"]:has(.home-card),
+  [data-testid="stColumn"]:has(.npp-card),
+  [data-testid="stColumn"]:has(.asm-card) { position: relative; }
+
+  /* 투명 버튼을 카드 위에 덮어씌워서 전체 클릭 가능하게 */
+  [data-testid="stColumn"]:has(.home-card) .stButton,
+  [data-testid="stColumn"]:has(.npp-card) .stButton,
+  [data-testid="stColumn"]:has(.asm-card) .stButton {
+    position: absolute !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important; height: 100% !important;
+    z-index: 10 !important; margin: 0 !important; padding: 0 !important;
+  }
+  [data-testid="stColumn"]:has(.home-card) .stButton button,
+  [data-testid="stColumn"]:has(.npp-card) .stButton button,
+  [data-testid="stColumn"]:has(.asm-card) .stButton button {
+    width: 100% !important; height: 100% !important;
+    background: transparent !important; border: none !important;
+    box-shadow: none !important; color: transparent !important;
+    font-size: 0 !important; cursor: pointer !important;
+  }
+  [data-testid="stColumn"]:has(.home-card) .stButton button:hover,
+  [data-testid="stColumn"]:has(.npp-card) .stButton button:hover,
+  [data-testid="stColumn"]:has(.asm-card) .stButton button:hover {
+    background: transparent !important;
+  }
 
   /* 홈 카드 */
   .home-card {
     background: var(--secondary-background-color);
     border: 1px solid rgba(128,128,128,0.2);
-    border-radius: 16px;
-    padding: 40px 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    min-height: 200px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    margin-bottom: -12px;
+    border-radius: 16px; padding: 40px 24px; text-align: center;
+    cursor: pointer; transition: all 0.2s; min-height: 200px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
   }
-  .home-card:hover { border-color: #4A9EFF; box-shadow: 0 4px 16px rgba(74,158,255,0.25); transform: translateY(-2px); }
+  .home-card:hover { border-color: #4A9EFF; box-shadow: 0 4px 16px rgba(74,158,255,0.25); }
   .home-icon  { font-size: 3rem; margin-bottom: 12px; }
   .home-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
   .home-desc  { font-size: 0.83rem; color: #888; }
-  /* 카드 아래 버튼 숨김 — JS가 카드 클릭으로 대체 */
-  .card-hidden-btn { display: none !important; }
 
-  /* NPP / ASM 카드 */
+  /* NPP 카드 */
   .npp-card {
     background: var(--secondary-background-color);
     border: 1px solid rgba(128,128,128,0.2);
-    border-radius: 10px;
-    padding: 16px;
-    height: 130px;
+    border-radius: 10px; padding: 16px; height: 130px; cursor: pointer;
   }
   .npp-card:hover { border-color: #4A9EFF; box-shadow: 0 2px 8px rgba(74,158,255,0.2); }
   .npp-title { font-size: 0.78rem; color: #888; margin-bottom: 4px; font-family: monospace; }
@@ -53,13 +71,12 @@ st.markdown("""
                padding: 2px 8px; border-radius: 20px; }
   .npp-amt   { font-size: 1.0rem; font-weight: 700; color: #4A9EFF; }
 
+  /* ASM 카드 */
   .asm-card {
     background: var(--secondary-background-color);
     border: 1px solid rgba(128,128,128,0.2);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    min-height: 120px;
+    border-radius: 12px; padding: 20px; text-align: center;
+    min-height: 120px; cursor: pointer;
   }
   .asm-card:hover { border-color: #4A9EFF; box-shadow: 0 2px 8px rgba(74,158,255,0.2); }
   .asm-name { font-size: 1.0rem; font-weight: 700; margin-bottom: 6px; }
@@ -67,40 +84,8 @@ st.markdown("""
   .asm-amt  { font-size: 1.1rem; font-weight: 700; color: #4A9EFF; margin-top: 8px; }
 
   hr.divider { border: none; border-top: 1px solid rgba(128,128,128,0.2); margin: 8px 0; }
-
-  .back-btn-area { margin-bottom: 12px; }
   .breadcrumb { font-size: 0.82rem; color: #888; margin-bottom: 4px; }
 </style>
-<script>
-(function wire() {
-  document.querySelectorAll('.home-card, .npp-card, .asm-card').forEach(card => {
-    if (card._wired) return;
-    card._wired = true;
-    const col = card.closest('[data-testid="stColumn"]');
-    if (!col) return;
-    const btn = col.querySelector('button');
-    if (!btn) return;
-    // 버튼 숨김
-    const wrap = btn.closest('[data-testid="element-container"]') || btn.parentElement;
-    if (wrap) wrap.style.display = 'none';
-    // 카드 클릭 → 버튼 클릭
-    card.addEventListener('click', () => btn.click());
-  });
-})();
-new MutationObserver(() => {
-  document.querySelectorAll('.home-card, .npp-card, .asm-card').forEach(card => {
-    if (card._wired) return;
-    card._wired = true;
-    const col = card.closest('[data-testid="stColumn"]');
-    if (!col) return;
-    const btn = col.querySelector('button');
-    if (!btn) return;
-    const wrap = btn.closest('[data-testid="element-container"]') || btn.parentElement;
-    if (wrap) wrap.style.display = 'none';
-    card.addEventListener('click', () => btn.click());
-  });
-}).observe(document.body, {childList: true, subtree: true});
-</script>
 """, unsafe_allow_html=True)
 
 # ── 상수 ────────────────────────────────────────────────────────────
