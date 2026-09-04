@@ -95,6 +95,13 @@ LOCAL_DATA   = Path(__file__).parent / "data" / "integrated_records.json"
 LOCAL_INV    = Path(__file__).parent / "data" / "inventory_records.json"
 
 SKU_LIST = ["BS VÀ HMP CŨ", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
+SKU_ICONS = {
+    "BS VÀ HMP CŨ": "🍼",
+    "GIẶT XẢ":      "👕",
+    "PPSU":         "👑",
+    "KHĂN ƯỚT":    "🧻",
+    "SỮA TẮM":     "🛁",
+}
 
 REGION_MAP = {
     "AGI":"An Giang","BDI":"Bình Định","BDU":"Bình Dương","BGI":"Bắc Giang",
@@ -601,7 +608,7 @@ def page_npp_stock():
             months_color = "color:#ff7875;font-weight:600;" if ms > 6 else ""
 
         row = st.columns([2.2, 1.1, 1.4, 1.5])
-        row[0].markdown(sku)
+        row[0].markdown(f"{SKU_ICONS.get(sku, '')} {sku}")
         row[1].markdown(f"{int(qty):,}" if qty > 0 else "—")
         row[2].markdown(fmt_inv(amt) if amt > 0 else "—")
         if months_color:
