@@ -365,29 +365,41 @@ def page_sales_npp():
     salesmen = npp.get("salesmen", {})
     sorted_sa = sorted(salesmen.items(), key=lambda x: -x[1].get("total", 0))
 
+    SKU_SHORT = {
+        "BS VÀ HMP CŨ": "BS",
+        "GIẶT XẢ":      "GIẶT XẢ",
+        "PPSU":          "PPSU",
+        "KHĂN ƯỚT":     "KHĂN ƯỚT",
+        "SỬA TẮM":      "SỬA TẮM",
+    }
+
     header = st.columns([3, 1.2, 1.2, 1.2, 1.2, 1.2, 2])
-    for col, label in zip(header, ["세일즈맨", "BS", "GIẶT XẢ", "PPSU", "KHĂN", "SỬA TẮM", "1~8월 추이"]):
+    for col, label in zip(header, ["세일즈맨", "BS", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỬA TẮM", f"1~{month}월 추이"]):
         col.markdown(f"**{label}**")
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
     for sa_name, sa_data in sorted_sa:
         skus = sa_data.get("skus", {})
-        total = sa_data.get("total", 0)
         monthly = []
         for m in MONTHS:
             m_npp = records.get(str(m), {}).get(code, {})
             m_sa  = m_npp.get("salesmen", {}).get(sa_name, {})
             monthly.append(m_sa.get("total", 0))
 
+        cumulative = sum(monthly[:month])
+        active_skus = [SKU_SHORT[sku] for sku in SKU_LIST if skus.get(sku, 0) > 0]
+        sku_str = ", ".join(active_skus)
+
         row = st.columns([3, 1.2, 1.2, 1.2, 1.2, 1.2, 2])
         display_name = sa_name.split("(NPP")[0].replace("Sale ", "").strip()
-        row[0].markdown(f"**{display_name}**<br><small style='color:#888'>{fmt(total)}</small>", unsafe_allow_html=True)
+        name_html = f"**{display_name}**({sku_str})" if sku_str else f"**{display_name}**"
+        row[0].markdown(f"{name_html}<br><small style='color:#4A9EFF'>1~{month}월 합계: {fmt(cumulative)}</small>", unsafe_allow_html=True)
         row[1].markdown(fmt(skus.get("BS VÀ HMP CŨ", 0)))
         row[2].markdown(fmt(skus.get("GIẶT XẢ", 0)))
         row[3].markdown(fmt(skus.get("PPSU", 0)))
         row[4].markdown(fmt(skus.get("KHĂN ƯỚT", 0)))
         row[5].markdown(fmt(skus.get("SỬA TẮM", 0)))
-        svg = sparkline_svg(monthly[:8], width=140, height=36, color="#4A9EFF")
+        svg = sparkline_svg(monthly[:month], width=140, height=36, color="#4A9EFF")
         row[6].markdown(svg, unsafe_allow_html=True)
 
 
