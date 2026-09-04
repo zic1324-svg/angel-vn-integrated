@@ -69,16 +69,20 @@ st.markdown("""
   hr.divider { border: none; border-top: 1px solid rgba(128,128,128,0.2); margin: 8px 0; }
   .breadcrumb { font-size: 0.82rem; color: #888; margin-bottom: 4px; }
 
-  .home-fab {
-    position: fixed; bottom: 24px; left: 24px; z-index: 9999;
-    background: #4A9EFF; color: #fff !important;
-    border-radius: 50px; padding: 10px 18px;
-    font-size: 0.85rem; font-weight: 700;
-    box-shadow: 0 4px 14px rgba(74,158,255,0.45);
-    transition: background 0.2s, box-shadow 0.2s;
-    text-decoration: none !important;
+  .nav-back {
+    display: inline-block; margin-bottom: 12px;
+    font-size: 0.85rem; color: #888; text-decoration: none !important;
+    border: 1px solid rgba(128,128,128,0.35); border-radius: 6px;
+    padding: 4px 12px; transition: border-color 0.2s, color 0.2s;
   }
-  .home-fab:hover { background: #2f86f0; box-shadow: 0 6px 18px rgba(74,158,255,0.55); }
+  .nav-back:hover { color: #ccc !important; border-color: rgba(128,128,128,0.6); }
+  .nav-home {
+    display: inline-block; margin-bottom: 12px; margin-left: 8px;
+    font-size: 0.85rem; color: #fff !important; text-decoration: none !important;
+    background: #4A9EFF; border-radius: 6px; padding: 4px 12px;
+    transition: background 0.2s;
+  }
+  .nav-home:hover { background: #2f86f0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -197,9 +201,10 @@ def back_button(label, page, **kwargs):
     if "npp"   in kwargs: params["npp"] = kwargs["npp"]
     if "month" in kwargs: params["m"]   = str(kwargs["month"])
     query = "&".join(f"{k}={v}" for k, v in params.items())
+    month = kwargs.get("month", state["month"])
     st.markdown(
-        f'<a href="?{query}" target="_self" style="display:inline-block;margin-bottom:12px;'
-        f'font-size:0.9rem;color:#888;text-decoration:none;">← {label}</a>',
+        f'<a href="?{query}" target="_self" class="nav-back">← {label}</a>'
+        f'<a href="?p=home&m={month}" target="_self" class="nav-home">🏠 홈</a>',
         unsafe_allow_html=True,
     )
 
@@ -624,10 +629,4 @@ PAGE_MAP = {
     "sales_npp":      page_sales_npp,
     "npp_stock":      page_npp_stock,
 }
-if state["page"] != "home":
-    st.markdown(
-        f'<a href="?p=home&m={state["month"]}" target="_self" class="home-fab">🏠 홈</a>',
-        unsafe_allow_html=True,
-    )
-
 PAGE_MAP.get(state["page"], page_home)()
