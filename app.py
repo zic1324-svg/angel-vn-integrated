@@ -14,25 +14,26 @@ st.markdown("""
 <style>
   .block-container { padding-top: 0.5rem; padding-bottom: 1rem; }
 
-  /* 홈 카드 버튼 스타일 */
-  div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] .stButton button {
-    min-height: 220px !important;
-    border-radius: 16px !important;
-    border: 1px solid rgba(128,128,128,0.25) !important;
-    background: var(--secondary-background-color) !important;
-    white-space: pre-wrap !important;
-    font-size: 1rem !important;
-    line-height: 2 !important;
-    transition: all 0.2s !important;
-    padding: 24px !important;
-    width: 100% !important;
+  /* 홈 카드 */
+  .home-card {
+    background: var(--secondary-background-color);
+    border: 1px solid rgba(128,128,128,0.2);
+    border-radius: 16px;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 200px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin-bottom: -12px;
   }
-  div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] .stButton button:hover {
-    border-color: #4A9EFF !important;
-    box-shadow: 0 4px 16px rgba(74,158,255,0.25) !important;
-    transform: translateY(-2px) !important;
-    color: #4A9EFF !important;
-  }
+  .home-card:hover { border-color: #4A9EFF; box-shadow: 0 4px 16px rgba(74,158,255,0.25); transform: translateY(-2px); }
+  .home-icon  { font-size: 3rem; margin-bottom: 12px; }
+  .home-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+  .home-desc  { font-size: 0.83rem; color: #888; }
+  /* 카드 아래 버튼 숨김 — JS가 카드 클릭으로 대체 */
+  .card-hidden-btn { display: none !important; }
 
   /* NPP / ASM 카드 */
   .npp-card {
@@ -70,6 +71,36 @@ st.markdown("""
   .back-btn-area { margin-bottom: 12px; }
   .breadcrumb { font-size: 0.82rem; color: #888; margin-bottom: 4px; }
 </style>
+<script>
+(function wire() {
+  document.querySelectorAll('.home-card, .npp-card, .asm-card').forEach(card => {
+    if (card._wired) return;
+    card._wired = true;
+    const col = card.closest('[data-testid="stColumn"]');
+    if (!col) return;
+    const btn = col.querySelector('button');
+    if (!btn) return;
+    // 버튼 숨김
+    const wrap = btn.closest('[data-testid="element-container"]') || btn.parentElement;
+    if (wrap) wrap.style.display = 'none';
+    // 카드 클릭 → 버튼 클릭
+    card.addEventListener('click', () => btn.click());
+  });
+})();
+new MutationObserver(() => {
+  document.querySelectorAll('.home-card, .npp-card, .asm-card').forEach(card => {
+    if (card._wired) return;
+    card._wired = true;
+    const col = card.closest('[data-testid="stColumn"]');
+    if (!col) return;
+    const btn = col.querySelector('button');
+    if (!btn) return;
+    const wrap = btn.closest('[data-testid="element-container"]') || btn.parentElement;
+    if (wrap) wrap.style.display = 'none';
+    card.addEventListener('click', () => btn.click());
+  });
+}).observe(document.body, {childList: true, subtree: true});
+</script>
 """, unsafe_allow_html=True)
 
 # ── 상수 ────────────────────────────────────────────────────────────
@@ -172,16 +203,28 @@ def page_home():
     st.markdown("---")
     c1, c2, c3 = st.columns(3)
     with c1:
-        if st.button("🏪\n\nNPP별 재고관리\n\nNPP 재고 현황 및 관리",
-                     key="btn_npp", use_container_width=True):
+        st.markdown("""<div class="home-card">
+          <div class="home-icon">🏪</div>
+          <div class="home-title">NPP별 재고관리</div>
+          <div class="home-desc">NPP 재고 현황 및 관리</div>
+        </div>""", unsafe_allow_html=True)
+        if st.button("_", key="btn_npp", use_container_width=True):
             go("npp_inventory")
     with c2:
-        if st.button("📈\n\nASM별 세일아웃관리\n\nASM 담당 NPP 세일아웃 현황",
-                     key="btn_asm", use_container_width=True):
+        st.markdown("""<div class="home-card">
+          <div class="home-icon">📈</div>
+          <div class="home-title">ASM별 세일아웃관리</div>
+          <div class="home-desc">ASM 담당 NPP 세일아웃 현황</div>
+        </div>""", unsafe_allow_html=True)
+        if st.button("_", key="btn_asm", use_container_width=True):
             go("asm_saleout")
     with c3:
-        if st.button("👤\n\nSales별 매출관리\n\n세일즈맨 SKU별 실적 및 월별 추이",
-                     key="btn_sales", use_container_width=True):
+        st.markdown("""<div class="home-card">
+          <div class="home-icon">👤</div>
+          <div class="home-title">Sales별 매출관리</div>
+          <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
+        </div>""", unsafe_allow_html=True)
+        if st.button("_", key="btn_sales", use_container_width=True):
             go("sales_asm")
 
 
