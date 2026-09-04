@@ -226,8 +226,7 @@ def _asm_grid(page_target, btn_label, month):
             href = card_href(page_target, asm=asm_code, m=month)
             with col:
                 st.markdown(f"""<a href="{href}" class="asm-card">
-                  <div class="asm-name">{asm_code}</div>
-                  <div class="asm-sub">{full_name}</div>
+                  <div class="asm-name">{full_name}</div>
                   <div class="asm-sub">NPP {data['npps']}개 · 세일즈맨 {len(data['salesmen'])}명</div>
                   <div class="asm-amt">{fmt(data['total'])}</div>
                 </a>""", unsafe_allow_html=True)
@@ -258,7 +257,7 @@ def page_asm_npp_list():
     filtered = {k: v for k, v in month_data.items() if v.get("asm") == asm_code}
     total = sum(d["total"] for d in filtered.values())
 
-    st.markdown(f"### {asm_code} — {full_name}")
+    st.markdown(f"### {full_name}")
     k1, k2 = st.columns(2)
     k1.metric("NPP 수", f"{len(filtered)}개")
     k2.metric(f"{month}월 합계", fmt(total))
@@ -276,7 +275,6 @@ def page_asm_npp_list():
                   <div class="npp-title">{code}</div>
                   <div class="npp-name">{name_short}</div>
                   <div class="npp-meta">
-                    <span class="npp-asm">{asm_code}</span>
                     <span class="npp-amt">{fmt(d["total"])}</span>
                   </div>
                 </a>""", unsafe_allow_html=True)
@@ -306,7 +304,7 @@ def page_sales_npp_list():
     month_data = records.get(str(month), {})
     filtered = {k: v for k, v in month_data.items() if v.get("asm") == asm_code}
 
-    st.markdown(f"### {asm_code} — {full_name} 담당 NPP")
+    st.markdown(f"### {full_name} 담당 NPP")
     st.markdown("---")
 
     sorted_npps = sorted(filtered.items(), key=lambda x: -x[1]["total"])
@@ -321,7 +319,6 @@ def page_sales_npp_list():
                   <div class="npp-title">{code}</div>
                   <div class="npp-name">{name_short}</div>
                   <div class="npp-meta">
-                    <span class="npp-asm">{asm_code}</span>
                     <span class="npp-amt">{fmt(d["total"])}</span>
                   </div>
                 </a>""", unsafe_allow_html=True)
@@ -347,9 +344,9 @@ def page_sales_npp():
 
     asm = npp.get("asm", "")
     asm_name = ASM_FULL.get(asm, asm)
-    st.markdown(f"### {code} — {npp['name']}")
+    st.markdown(f"### {npp['name']}")
     c1, c2, c3 = st.columns(3)
-    c1.metric("ASM", f"{asm} ({asm_name})")
+    c1.metric("ASM", asm_name)
     c2.metric(f"{month}월 합계", fmt(npp["total"]))
     c3.metric("세일즈맨 수", len(npp.get("salesmen", {})))
 
