@@ -525,7 +525,7 @@ def page_sales_npp():
 
         row = st.columns(col_widths)
         display_name = sa_name.split("(NPP")[0].replace("Sale ", "").strip()
-        name_html = f"**{display_name}**({sku_str})" if sku_str else f"**{display_name}**"
+        name_html = f"**{display_name}** &nbsp;({sku_str})" if sku_str else f"**{display_name}**"
         row[0].markdown(name_html, unsafe_allow_html=True)
         for i in range(month):
             row[i + 1].markdown(fmt(monthly[i]))
