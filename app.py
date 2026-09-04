@@ -119,9 +119,7 @@ state = get_state()
 
 # ── 유틸 ────────────────────────────────────────────────────────────
 def fmt(n):
-    if n >= 1_000_000_000: return f"{n/1e9:.2f}tỷ"
-    if n >= 1_000_000:     return f"{n/1e6:.1f}M"
-    return f"{n:,.0f}"
+    return f"{n/1_000_000:.2f}Tr"
 
 def link(href, cls, content):
     return f'<a href="{href}" class="{cls}">{content}</a>'
