@@ -218,7 +218,7 @@ def page_detail():
 def page_main():
     # 헤더
     c_title, c_month, c_asm, c_search = st.columns([3, 1.5, 1.5, 2])
-    c_title.markdown("## 📊 엔젤베트남 영업 통합관리")
+    c_title.markdown("## 📊 엔젤베트남 영업통합관리")
 
     available_months = sorted([int(k) for k in records.keys() if k.isdigit()])
     if not available_months:
