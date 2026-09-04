@@ -176,7 +176,7 @@ def sparkline_svg(values, width=120, height=32, color="#4A9EFF"):
 def page_home():
     st.markdown("### 📊 엔젤베트남 영업 통합관리")
     st.markdown("---")
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     month = state["month"]
     with c1:
         st.markdown(f"""<a href="{card_href('npp_inventory', m=month)}" target="_self" class="home-card">
@@ -195,6 +195,12 @@ def page_home():
           <div class="home-icon">👤</div>
           <div class="home-title">Sales별 매출관리</div>
           <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
+        </a>""", unsafe_allow_html=True)
+    with c4:
+        st.markdown(f"""<a href="{card_href('asm_meetings')}" target="_self" class="home-card">
+          <div class="home-icon">📋</div>
+          <div class="home-title">ASM 회의보고</div>
+          <div class="home-desc">ASM별 회의 보고 내용 확인</div>
         </a>""", unsafe_allow_html=True)
 
 
@@ -276,6 +282,13 @@ def page_asm_npp_list():
                     <span class="npp-amt">{fmt(d["total"])}</span>
                   </div>
                 </a>""", unsafe_allow_html=True)
+
+
+def page_asm_meetings():
+    back_button("홈으로", "home")
+    st.markdown("## 📋 ASM 회의보고")
+    st.markdown("---")
+    st.info("준비 중입니다. 데이터 파일 수신 후 업데이트될 예정입니다.")
 
 
 def page_sales_asm():
@@ -406,6 +419,7 @@ PAGE_MAP = {
     "npp_inventory":  page_npp_inventory,
     "asm_saleout":    page_asm_saleout,
     "asm_npp_list":   page_asm_npp_list,
+    "asm_meetings":   page_asm_meetings,
     "sales_asm":      page_sales_asm,
     "sales_npp_list": page_sales_npp_list,
     "sales_npp":      page_sales_npp,
