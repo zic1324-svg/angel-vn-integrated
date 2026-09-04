@@ -38,8 +38,8 @@ st.markdown("""
   .npp-card-wrap:hover { border-color: rgba(74,158,255,0.4); box-shadow: 0 2px 8px rgba(74,158,255,0.1); }
   .npp-card-hdr { padding: 14px 14px 10px; }
   .npp-card-body { display: flex; border-top: 1px solid rgba(128,128,128,0.15); }
-  .npp-title { font-size: 0.78rem; color: #888; margin-bottom: 4px; font-family: monospace; }
-  .npp-name  { font-size: 0.9rem; font-weight: 600; line-height: 1.3;
+  .npp-title { font-size: 0.83rem; color: #888; margin-bottom: 4px; font-family: monospace; }
+  .npp-name  { font-size: 1.0rem; font-weight: 600; line-height: 1.3;
                overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2;
                -webkit-box-orient: vertical; }
   .npp-half {
@@ -48,11 +48,11 @@ st.markdown("""
   }
   .npp-half:hover { background: rgba(74,158,255,0.08); }
   .npp-half-left  { border-right: 1px solid rgba(128,128,128,0.15); }
-  .npp-half-lbl   { font-size: 0.72rem; color: #888; margin-bottom: 4px; }
-  .npp-half-amt   { font-size: 1.0rem; font-weight: 700; color: #4A9EFF; }
+  .npp-half-lbl   { font-size: 0.78rem; color: #888; margin-bottom: 4px; }
+  .npp-half-amt   { font-size: 1.05rem; font-weight: 700; color: #4A9EFF; }
   .npp-half-inv   { color: #52c41a; }
-  .npp-half-months      { font-size: 0.75rem; color: #888;    margin-top: 3px; }
-  .npp-half-months-warn { font-size: 0.75rem; color: #ff7875; margin-top: 3px; font-weight: 600; }
+  .npp-half-months      { font-size: 0.8rem; color: #888;    margin-top: 3px; }
+  .npp-half-months-warn { font-size: 0.8rem; color: #ff7875; margin-top: 3px; font-weight: 600; }
 
   .asm-card {
     background: var(--secondary-background-color);
