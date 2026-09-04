@@ -371,9 +371,12 @@ def page_sales_npp():
         "SỬA TẮM":      "SỬA TẮM",
     }
 
-    header = st.columns([3, 1.2, 1.2, 1.2, 1.2, 1.2, 2])
-    for col, label in zip(header, ["세일즈맨", "BS", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỬA TẮM", f"1~{month}월 추이"]):
-        col.markdown(f"**{label}**")
+    col_widths = [2.5] + [1.0] * month + [1.5]
+    header = st.columns(col_widths)
+    header[0].markdown("**세일즈맨**")
+    for i in range(month):
+        header[i + 1].markdown(f"**{i+1}월**")
+    header[-1].markdown("**추이**")
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
     for sa_name, sa_data in sorted_sa:
@@ -384,21 +387,17 @@ def page_sales_npp():
             m_sa  = m_npp.get("salesmen", {}).get(sa_name, {})
             monthly.append(m_sa.get("total", 0))
 
-        cumulative = sum(monthly[:month])
         active_skus = [SKU_SHORT[sku] for sku in SKU_LIST if skus.get(sku, 0) > 0]
         sku_str = ", ".join(active_skus)
 
-        row = st.columns([3, 1.2, 1.2, 1.2, 1.2, 1.2, 2])
+        row = st.columns(col_widths)
         display_name = sa_name.split("(NPP")[0].replace("Sale ", "").strip()
         name_html = f"**{display_name}**({sku_str})" if sku_str else f"**{display_name}**"
-        row[0].markdown(f"{name_html}<br><small style='color:#4A9EFF'>1~{month}월 합계: {fmt(cumulative)}</small>", unsafe_allow_html=True)
-        row[1].markdown(fmt(skus.get("BS VÀ HMP CŨ", 0)))
-        row[2].markdown(fmt(skus.get("GIẶT XẢ", 0)))
-        row[3].markdown(fmt(skus.get("PPSU", 0)))
-        row[4].markdown(fmt(skus.get("KHĂN ƯỚT", 0)))
-        row[5].markdown(fmt(skus.get("SỬA TẮM", 0)))
+        row[0].markdown(name_html, unsafe_allow_html=True)
+        for i in range(month):
+            row[i + 1].markdown(fmt(monthly[i]))
         svg = sparkline_svg(monthly[:month], width=140, height=36, color="#4A9EFF")
-        row[6].markdown(svg, unsafe_allow_html=True)
+        row[-1].markdown(svg, unsafe_allow_html=True)
 
 
 # ── 라우팅 ───────────────────────────────────────────────────────────
