@@ -104,19 +104,19 @@ SKU_ICONS = {
 }
 
 REGION_MAP = {
-    "AGI":"An Giang","BDI":"Bình Định","BDU":"Bình Dương","BGI":"Bắc Giang",
-    "BLI":"Bạc Liêu","BNI":"Bắc Ninh","BPH":"Bình Phước","BRV":"Bà Rịa-Vũng Tàu",
-    "BTH":"Bình Thuận","BTR":"Bến Tre","CMA":"Cà Mau","CTH":"Cần Thơ",
-    "DLA":"Đắk Lắk","DNA":"Đà Nẵng","DNO":"Đắk Nông","DON":"Đồng Nai",
-    "DTH":"Đồng Tháp","GLA":"Gia Lai","HAN":"Hà Nội","HCM":"TP. HCM",
-    "HGI":"Hậu Giang","HPH":"Hải Phòng","HTI":"Hà Tĩnh","HUE":"Huế",
-    "HYE":"Hưng Yên","KGI":"Kiên Giang","KHH":"Khánh Hòa","LAN":"Long An",
-    "LCA":"Lào Cai","LDO":"Lâm Đồng","NAN":"Nghệ An","NBI":"Ninh Bình",
-    "NDI":"Nam Định","PTH":"Phú Thọ","QBI":"Quảng Bình","QNA":"Quảng Nam",
-    "QNG":"Quảng Ngãi","QNI":"Quảng Ninh","QTR":"Quảng Trị","STR":"Sóc Trăng",
-    "TBI":"Thái Bình","TGI":"Tiền Giang","THO":"Thanh Hóa","TNG":"Thái Nguyên",
-    "TNI":"Tây Ninh","TQU":"Tuyên Quang","TVI":"Trà Vinh","VLO":"Vĩnh Long",
-    "VPH":"Vĩnh Phúc",
+    "AGI":"Tỉnh An Giang","BDI":"Tỉnh Bình Định","BDU":"Tỉnh Bình Dương","BGI":"Tỉnh Bắc Giang",
+    "BLI":"Tỉnh Bạc Liêu","BNI":"Tỉnh Bắc Ninh","BPH":"Tỉnh Bình Phước","BRV":"Tỉnh Bà Rịa - Vũng Tàu",
+    "BTH":"Tỉnh Bình Thuận","BTR":"Tỉnh Bến Tre","CMA":"Tỉnh Cà Mau","CTH":"Thành phố Cần Thơ",
+    "DLA":"Tỉnh Đắk Lắk","DNA":"Thành phố Đà Nẵng","DNO":"Tỉnh Đắk Nông","DON":"Tỉnh Đồng Nai",
+    "DTH":"Tỉnh Đồng Tháp","GLA":"Tỉnh Gia Lai","HAN":"Thành phố Hà Nội","HCM":"Thành phố Hồ Chí Minh",
+    "HGI":"Tỉnh Hà Giang","HPH":"Thành phố Hải Phòng","HTI":"Tỉnh Hà Tĩnh","HUE":"Tỉnh Thừa Thiên - Huế",
+    "HYE":"Tỉnh Hưng Yên","KGI":"Tỉnh Kiên Giang","KHH":"Tỉnh Khánh Hòa","LAN":"Tỉnh Long An",
+    "LCA":"Tỉnh Lào Cai","LDO":"Tỉnh Lâm Đồng","NAN":"Tỉnh Nghệ An","NBI":"Tỉnh Ninh Bình",
+    "NDI":"Tỉnh Nam Định","PTH":"Tỉnh Phú Thọ","QBI":"Tỉnh Quảng Bình","QNA":"Tỉnh Quảng Nam",
+    "QNG":"Tỉnh Quảng Ngãi","QNI":"Tỉnh Quảng Ninh","QTR":"Tỉnh Quảng Trị","STR":"Tỉnh Sóc Trăng",
+    "TBI":"Tỉnh Thái Bình","TGI":"Tỉnh Tiền Giang","THO":"Tỉnh Thanh Hóa","TNG":"Tỉnh Thái Nguyên",
+    "TNI":"Tỉnh Tây Ninh","TQU":"Tỉnh Tuyên Quang","TVI":"Tỉnh Trà Vinh","VLO":"Tỉnh Vĩnh Long",
+    "VPH":"Tỉnh Vĩnh Phúc",
 }
 
 def get_region(code):
