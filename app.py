@@ -363,7 +363,7 @@ def page_asm_npp_list():
             with col:
                 st.markdown(f"""<div class="npp-card-wrap">
                   <div class="npp-card-hdr">
-                    <div class="npp-title">{code} · {d.get("province") or get_region(code)}</div>
+                    <div class="npp-title">{code} · {get_region(code) or d.get("province")}</div>
                     <div class="npp-name">{name_short}</div>
                   </div>
                   <div class="npp-card-body">
@@ -441,7 +441,7 @@ def page_sales_npp_list():
             with col:
                 st.markdown(f"""<div class="npp-card-wrap">
                   <div class="npp-card-hdr">
-                    <div class="npp-title">{code} · {d.get("province") or get_region(code)}</div>
+                    <div class="npp-title">{code} · {get_region(code) or d.get("province")}</div>
                     <div class="npp-name">{name_short}</div>
                   </div>
                   <div class="npp-card-body">
@@ -478,7 +478,7 @@ def page_sales_npp():
 
     asm = npp.get("asm", "")
     asm_name = ASM_FULL.get(asm, asm)
-    province = npp.get("province") or get_region(code)
+    province = get_region(code) or npp.get("province")
     st.markdown(f"### {npp['name']}  <small style='color:#888;font-size:0.75rem;font-weight:400;'>{province}</small>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     c1.metric("ASM", asm_name)
@@ -554,7 +554,7 @@ def page_npp_stock():
     month_data = records.get(str(month), {})
     npp = month_data.get(code, {})
     name     = npp.get("name", code)
-    province = npp.get("province") or get_region(code)
+    province = get_region(code) or npp.get("province")
 
     st.markdown(
         f"### {name}  <small style='color:#888;font-size:0.75rem;font-weight:400;'>{province}</small>",
