@@ -352,62 +352,64 @@ def page_asm_npp_list():
     k3.metric("세일아웃 없는 NPP", f"{len(inv_only)}개")
     st.markdown("---")
 
-    def _render_npp_cards(npp_list, src_page):
-        COLS = 4
-        for row in [npp_list[i:i+COLS] for i in range(0, len(npp_list), COLS)]:
-            cols = st.columns(COLS)
-            for col, (code, d, has_so) in zip(cols, row):
-                if has_so:
-                    name = d["name"]
-                    saleout_total = d["total"]
-                else:
-                    name = d.get("_name", code)
-                    saleout_total = 0
-                name_short = name[:38] + ("…" if len(name) > 38 else "")
-                href_so  = card_href(src_page,   npp=code, asm=asm_code, m=month)
-                href_inv = card_href("npp_stock", npp=code, asm=asm_code, m=month, src="asm")
-                npp_inv_amt = sum(
-                    s.get("amt", 0)
-                    for sk, s in inv_month.get(code, {}).items()
-                    if not sk.startswith("_")
+    so_list  = [(k, v, True)  for k, v in sorted(filtered.items(), key=lambda x: -x[1]["total"])]
+    inv_list = [(k, v, False) for k, v in sorted(inv_only.items(), key=lambda x: x[0])]
+    all_npps = so_list + inv_list
+    COLS = 4
+    for batch in [all_npps[i:i+COLS] for i in range(0, len(all_npps), COLS)]:
+        cols = st.columns(COLS)
+        for col, (code, d, has_so) in zip(cols, batch):
+            if has_so:
+                name = d["name"]
+                saleout_total = d["total"]
+            else:
+                name = d.get("_name", code)
+                saleout_total = 0
+            name_short = name[:38] + ("…" if len(name) > 38 else "")
+            href_so  = card_href("sales_npp", npp=code, asm=asm_code, m=month)
+            href_inv = card_href("npp_stock", npp=code, asm=asm_code, m=month, src="asm")
+            npp_inv_amt = sum(
+                s.get("amt", 0)
+                for sk, s in inv_month.get(code, {}).items()
+                if not sk.startswith("_")
+            )
+            inv_str = fmt_inv(npp_inv_amt) if npp_inv_amt > 0 else "-"
+            if npp_inv_amt > 0 and saleout_total > 0:
+                months_val = npp_inv_amt / saleout_total
+                months_str = f"{months_val:.1f}개월"
+                months_cls = "npp-half-months-warn" if months_val > 6 else "npp-half-months"
+            elif npp_inv_amt > 0:
+                months_str = "∞"
+                months_cls = "npp-half-months-warn"
+            else:
+                months_str = ""
+                months_cls = "npp-half-months"
+            wrap_cls = "npp-card-wrap" + (" npp-no-so" if not has_so else "")
+            so_display = fmt_inv(saleout_total) if has_so else "없음"
+            so_badge = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
+            province = get_region(code) or d.get("_province") or d.get("province", "")
+            with col:
+                st.markdown(
+                    f'<div class="{wrap_cls}">'
+                    f'<div class="npp-card-hdr">'
+                    f'<div class="npp-title">{code} · {province}</div>'
+                    f'<div class="npp-name">{name_short}</div>'
+                    f'{so_badge}'
+                    f'</div>'
+                    f'<div class="npp-card-body">'
+                    f'<a href="{href_so}" target="_self" class="npp-half npp-half-left">'
+                    f'<div class="npp-half-lbl">Sale out</div>'
+                    f'<div class="npp-half-amt">{so_display}</div>'
+                    f'</a>'
+                    f'<a href="{href_inv}" target="_self" class="npp-half">'
+                    f'<div class="npp-half-lbl">재고금액</div>'
+                    f'<div class="npp-half-amt npp-half-inv">{inv_str}</div>'
+                    f'<div class="{months_cls}">{months_str}</div>'
+                    f'</a>'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
                 )
-                inv_str = fmt_inv(npp_inv_amt) if npp_inv_amt > 0 else "-"
-                if npp_inv_amt > 0 and saleout_total > 0:
-                    months_val = npp_inv_amt / saleout_total
-                    months_str = f"{months_val:.1f}개월"
-                    months_cls = "npp-half-months-warn" if months_val > 6 else "npp-half-months"
-                elif npp_inv_amt > 0:
-                    months_str = "∞"
-                    months_cls = "npp-half-months-warn"
-                else:
-                    months_str = ""
-                    months_cls = "npp-half-months"
-                wrap_cls = "npp-card-wrap" + (" npp-no-so" if not has_so else "")
-                so_display = fmt_inv(saleout_total) if has_so else "없음"
-                so_badge = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
-                with col:
-                    st.markdown(f"""<div class="{wrap_cls}">
-                      <div class="npp-card-hdr">
-                        <div class="npp-title">{code} · {get_region(code) or d.get("_province") or d.get("province", "")}</div>
-                        <div class="npp-name">{name_short}</div>
-                        {so_badge}
-                      </div>
-                      <div class="npp-card-body">
-                        <a href="{href_so}" target="_self" class="npp-half npp-half-left">
-                          <div class="npp-half-lbl">Sale out</div>
-                          <div class="npp-half-amt">{so_display}</div>
-                        </a>
-                        <a href="{href_inv}" target="_self" class="npp-half">
-                          <div class="npp-half-lbl">재고금액</div>
-                          <div class="npp-half-amt npp-half-inv">{inv_str}</div>
-                          <div class="{months_cls}">{months_str}</div>
-                        </a>
-                      </div>
-                    </div>""", unsafe_allow_html=True)
-
-    so_list  = [(k, v, True)  for k, v in sorted(filtered.items(),  key=lambda x: -x[1]["total"])]
-    inv_list = [(k, v, False) for k, v in sorted(inv_only.items(),  key=lambda x: x[0])]
-    _render_npp_cards(so_list + inv_list, "sales_npp")
 
 
 def page_asm_meetings():
@@ -447,63 +449,64 @@ def page_sales_npp_list():
     st.markdown(f"### {full_name} 담당 NPP")
     st.markdown("---")
 
-    COLS = 4
-    def _render_card(col, code, d, has_so):
-        if has_so:
-            name = d["name"]
-            saleout_total = d["total"]
-        else:
-            name = d.get("_name", code)
-            saleout_total = 0
-        name_short = name[:38] + ("…" if len(name) > 38 else "")
-        href_so  = card_href("sales_npp",  npp=code, asm=asm_code, m=month)
-        href_inv = card_href("npp_stock",  npp=code, asm=asm_code, m=month, src="sales")
-        npp_inv_amt = sum(
-            s.get("amt", 0)
-            for sk, s in inv_month.get(code, {}).items()
-            if not sk.startswith("_")
-        )
-        inv_str = fmt_inv(npp_inv_amt) if npp_inv_amt > 0 else "-"
-        if npp_inv_amt > 0 and saleout_total > 0:
-            months_val = npp_inv_amt / saleout_total
-            months_str = f"{months_val:.1f}개월"
-            months_cls = "npp-half-months-warn" if months_val > 6 else "npp-half-months"
-        elif npp_inv_amt > 0:
-            months_str = "∞"
-            months_cls = "npp-half-months-warn"
-        else:
-            months_str = ""
-            months_cls = "npp-half-months"
-        wrap_cls = "npp-card-wrap" + (" npp-no-so" if not has_so else "")
-        so_display = fmt_inv(saleout_total) if has_so else "없음"
-        so_badge = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
-        with col:
-            st.markdown(f"""<div class="{wrap_cls}">
-              <div class="npp-card-hdr">
-                <div class="npp-title">{code} · {get_region(code) or d.get("_province") or d.get("province", "")}</div>
-                <div class="npp-name">{name_short}</div>
-                {so_badge}
-              </div>
-              <div class="npp-card-body">
-                <a href="{href_so}" target="_self" class="npp-half npp-half-left">
-                  <div class="npp-half-lbl">Sale out</div>
-                  <div class="npp-half-amt">{so_display}</div>
-                </a>
-                <a href="{href_inv}" target="_self" class="npp-half">
-                  <div class="npp-half-lbl">재고금액</div>
-                  <div class="npp-half-amt npp-half-inv">{inv_str}</div>
-                  <div class="{months_cls}">{months_str}</div>
-                </a>
-              </div>
-            </div>""", unsafe_allow_html=True)
-
     so_list  = [(k, v, True)  for k, v in sorted(filtered.items(), key=lambda x: -x[1]["total"])]
     inv_list = [(k, v, False) for k, v in sorted(inv_only.items(), key=lambda x: x[0])]
     all_npps = so_list + inv_list
-    for row in [all_npps[i:i+COLS] for i in range(0, len(all_npps), COLS)]:
+    COLS = 4
+    for batch in [all_npps[i:i+COLS] for i in range(0, len(all_npps), COLS)]:
         cols = st.columns(COLS)
-        for col_obj, (code, d, has_so) in zip(cols, row):
-            _render_card(col_obj, code, d, has_so)
+        for col, (code, d, has_so) in zip(cols, batch):
+            if has_so:
+                name = d["name"]
+                saleout_total = d["total"]
+            else:
+                name = d.get("_name", code)
+                saleout_total = 0
+            name_short = name[:38] + ("…" if len(name) > 38 else "")
+            href_so  = card_href("sales_npp", npp=code, asm=asm_code, m=month)
+            href_inv = card_href("npp_stock", npp=code, asm=asm_code, m=month, src="sales")
+            npp_inv_amt = sum(
+                s.get("amt", 0)
+                for sk, s in inv_month.get(code, {}).items()
+                if not sk.startswith("_")
+            )
+            inv_str = fmt_inv(npp_inv_amt) if npp_inv_amt > 0 else "-"
+            if npp_inv_amt > 0 and saleout_total > 0:
+                months_val = npp_inv_amt / saleout_total
+                months_str = f"{months_val:.1f}개월"
+                months_cls = "npp-half-months-warn" if months_val > 6 else "npp-half-months"
+            elif npp_inv_amt > 0:
+                months_str = "∞"
+                months_cls = "npp-half-months-warn"
+            else:
+                months_str = ""
+                months_cls = "npp-half-months"
+            wrap_cls = "npp-card-wrap" + (" npp-no-so" if not has_so else "")
+            so_display = fmt_inv(saleout_total) if has_so else "없음"
+            so_badge = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
+            province = get_region(code) or d.get("_province") or d.get("province", "")
+            with col:
+                st.markdown(
+                    f'<div class="{wrap_cls}">'
+                    f'<div class="npp-card-hdr">'
+                    f'<div class="npp-title">{code} · {province}</div>'
+                    f'<div class="npp-name">{name_short}</div>'
+                    f'{so_badge}'
+                    f'</div>'
+                    f'<div class="npp-card-body">'
+                    f'<a href="{href_so}" target="_self" class="npp-half npp-half-left">'
+                    f'<div class="npp-half-lbl">Sale out</div>'
+                    f'<div class="npp-half-amt">{so_display}</div>'
+                    f'</a>'
+                    f'<a href="{href_inv}" target="_self" class="npp-half">'
+                    f'<div class="npp-half-lbl">재고금액</div>'
+                    f'<div class="npp-half-amt npp-half-inv">{inv_str}</div>'
+                    f'<div class="{months_cls}">{months_str}</div>'
+                    f'</a>'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
 
 
 def page_sales_npp():
