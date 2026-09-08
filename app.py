@@ -543,7 +543,10 @@ def page_sales_npp():
     c1, c2, c3 = st.columns(3)
     c1.metric("ASM", asm_name)
     c2.metric(f"{month}월 합계", fmt(npp["total"]) if npp else "세일아웃 없음")
-    c3.metric("세일즈맨 수", len(npp.get("salesmen", {})) if npp else 0)
+    current_staff = len(npp.get("salesmen", {})) if npp else 0
+    planned_staff = inv_meta.get("_planned_staff")
+    staff_disp = f"{current_staff}/{planned_staff}" if planned_staff else str(current_staff)
+    c3.metric("세일즈맨 수", staff_disp)
 
     if not npp:
         st.info("이 NPP는 해당 월에 세일아웃 데이터가 없습니다.")
