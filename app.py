@@ -132,6 +132,33 @@ ASM_FULL = {
 }
 MONTHS = list(range(1, 13))
 
+# ASM별 NPP 고정 표시 순서 (2026년 7월 재고조사 파일 기준 — 변경 금지)
+NPP_ORDER = {
+    'TU':   ['KPP.HAN.0009','KPP.PTH.0007','KPP.BNI.0005','KPP.BGI.0003',
+             'KPP.TQU.0001','KPP.VPH.0001','KPP.TNG.0003','KPP.HGI.0001'],
+    'VINH': ['KPP.HAN.0007','KPP.QNI.0004','KPP.HPH.0001','KPP.HDU.0003',
+             'KPP.NAN.0006','KPP.NDI.0005','KPP.NBI.0001','KPP.QBI.0002',
+             'KPP.HTI.0005','KPP.THO.0003','KPP.THO.0004','KPP.TBI.0003'],
+    'LAM':  ['KPP.DNA.0003','KPP.HUE.0004','KPP.QTR.0002','KPP.QNG.0003',
+             'KPP.QNA.0002','KPP.BDI.0004','KPP.PHY.0002','KPP.QNA.0001'],
+    'HAI':  ['KPP.DLA.0004','KPP.GLA.0001','KPP.DLA.0005','KPP.LDO.0003',
+             'KPP.LDO.0006','KPP.LDO.0007','KPP.KHH.0003','KPP.DNO.0004',
+             'KPP.KHH.0002'],
+    'QUOC': ['KPP.DON.0005','KPP.DON.0001','KPP.BTH.0002','KPP.BDU.0002',
+             'KPP.BRV.0004','KPP.DON.0006','KPP.BPH.0001','KPP.BDU.0005',
+             'KPP.TNI.0001'],
+    'HUNG': ['KPP.HCM.0003','KPP.TGI.0002','KPP.LAN.0004','KPP.DTH.0004'],
+    'NHU':  ['KPP.AGI.0003','KPP.KGI.0004','KPP.BTR.0002','KPP.STR.0015',
+             'KPP.TVI.0002','KPP.BLI.0001','KPP.CTH.0006','KPP.CMA.0002',
+             'KPP.VLO.0002'],
+}
+
+def sort_npps(codes, asm_code):
+    """NPP_ORDER 기준으로 정렬. 목록에 없는 코드는 맨 뒤로."""
+    order = NPP_ORDER.get(asm_code, [])
+    idx = {c: i for i, c in enumerate(order)}
+    return sorted(codes, key=lambda c: idx.get(c, len(order)))
+
 # ── 데이터 로드 ──────────────────────────────────────────────────────
 @st.cache_data(ttl=300)
 def load_data():
@@ -352,9 +379,8 @@ def page_asm_npp_list():
     k3.metric("세일아웃 없는 NPP", f"{len(inv_only)}개")
     st.markdown("---")
 
-    so_list  = [(k, v, True)  for k, v in sorted(filtered.items(), key=lambda x: -x[1]["total"])]
-    inv_list = [(k, v, False) for k, v in sorted(inv_only.items(), key=lambda x: x[0])]
-    all_npps = so_list + inv_list
+    all_codes = sort_npps(list(filtered.keys()) + list(inv_only.keys()), asm_code)
+    all_npps  = [(k, filtered[k] if k in filtered else inv_only[k], k in filtered) for k in all_codes]
     COLS = 4
     for batch in [all_npps[i:i+COLS] for i in range(0, len(all_npps), COLS)]:
         cols = st.columns(COLS)
@@ -449,9 +475,8 @@ def page_sales_npp_list():
     st.markdown(f"### {full_name} 담당 NPP")
     st.markdown("---")
 
-    so_list  = [(k, v, True)  for k, v in sorted(filtered.items(), key=lambda x: -x[1]["total"])]
-    inv_list = [(k, v, False) for k, v in sorted(inv_only.items(), key=lambda x: x[0])]
-    all_npps = so_list + inv_list
+    all_codes = sort_npps(list(filtered.keys()) + list(inv_only.keys()), asm_code)
+    all_npps  = [(k, filtered[k] if k in filtered else inv_only[k], k in filtered) for k in all_codes]
     COLS = 4
     for batch in [all_npps[i:i+COLS] for i in range(0, len(all_npps), COLS)]:
         cols = st.columns(COLS)
