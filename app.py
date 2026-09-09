@@ -568,8 +568,8 @@ def page_sa_province():
     q_months = QUARTERS[selected_q]
     st.markdown("---")
 
-    SKUS = ["BS VÀ HMP CŨ", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
-    SKU_SHORT = ["BS/HMP", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
+    SKUS = ["BS VÀ HMP CŨ", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
+    SKU_SHORT = ["BS/HMP", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
 
     prov_data = {}
     for m in q_months:
@@ -593,7 +593,7 @@ def page_sa_province():
     st.markdown(f"**{selected_q} 성별 매출 순위 — {len(sorted_provs)}개 성**")
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
-    hdr = st.columns([0.4, 2.2, 1.5, 1.1, 1.1, 1.1, 1.1, 1.1])
+    hdr = st.columns([0.4, 2.2, 1.5, 1.2, 1.2, 1.2, 1.2])
     for col, label in zip(hdr, ["**#**", "**성(Province)**", "**합계**"] + [f"**{s}**" for s in SKU_SHORT]):
         col.markdown(label)
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
@@ -602,7 +602,7 @@ def page_sa_province():
     for i, (prov, data) in enumerate(sorted_provs, 1):
         total = data["total"]
         share = total / grand * 100
-        row = st.columns([0.4, 2.2, 1.5, 1.1, 1.1, 1.1, 1.1, 1.1])
+        row = st.columns([0.4, 2.2, 1.5, 1.2, 1.2, 1.2, 1.2])
         row[0].markdown(str(i))
         row[1].markdown(prov)
         row[2].markdown(f"{fmt_ty(total)} <span style='font-size:0.78rem;color:#888;'>({share:.1f}%)</span>", unsafe_allow_html=True)
