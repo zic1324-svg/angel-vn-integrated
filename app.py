@@ -569,7 +569,7 @@ def page_sa_province():
     st.markdown("---")
 
     SKUS = ["BS VÀ HMP CŨ", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
-    SKU_SHORT = ["BS/HMP", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
+    SKU_LABELS = {"BS VÀ HMP CŨ": "BS / HMP", "PPSU": "PPSU", "KHĂN ƯỚT": "KHĂN ƯỚT", "SỮA TẮM": "SỮA TẮM"}
 
     prov_data = {}
     for m in q_months:
@@ -577,43 +577,46 @@ def page_sa_province():
             prov = kpp_data.get("province", "") or "기타"
             if prov not in prov_data:
                 prov_data[prov] = {s: 0 for s in SKUS}
-                prov_data[prov]["total"] = 0
             for sa_data in kpp_data.get("salesmen", {}).values():
                 skus = sa_data.get("skus", {})
                 for sku in SKUS:
                     prov_data[prov][sku] += skus.get(sku, 0) or 0
-                prov_data[prov]["total"] += sa_data.get("total", 0)
 
     if not prov_data:
         st.info("데이터 없음")
         return
 
-    sorted_provs = sorted(prov_data.items(), key=lambda x: -x[1]["total"])
+    st.markdown(f"**{selected_q} — SKU별 상위 5개 성**")
+    st.markdown("---")
 
-    st.markdown(f"**{selected_q} 성별 매출 순위 — {len(sorted_provs)}개 성**")
-    st.markdown('<hr class="divider">', unsafe_allow_html=True)
-
-    hdr = st.columns([0.4, 2.2, 1.5, 1.2, 1.2, 1.2, 1.2])
-    for col, label in zip(hdr, ["**#**", "**성(Province)**", "**합계**"] + [f"**{s}**" for s in SKU_SHORT]):
-        col.markdown(label)
-    st.markdown('<hr class="divider">', unsafe_allow_html=True)
-
-    grand = sum(d["total"] for _, d in sorted_provs) or 1
-    for i, (prov, data) in enumerate(sorted_provs, 1):
-        total = data["total"]
-        share = total / grand * 100
-        row = st.columns([0.4, 2.2, 1.5, 1.2, 1.2, 1.2, 1.2])
-        row[0].markdown(str(i))
-        row[1].markdown(prov)
-        row[2].markdown(f"{fmt_ty(total)} <span style='font-size:0.78rem;color:#888;'>({share:.1f}%)</span>", unsafe_allow_html=True)
-        for j, sku in enumerate(SKUS):
-            amt = data[sku]
-            pct = amt / total * 100 if total > 0 else 0
-            if amt:
-                row[3+j].markdown(f"{fmt_ty(amt)}<br><span style='font-size:0.75rem;color:#888;'>{pct:.0f}%</span>", unsafe_allow_html=True)
-            else:
-                row[3+j].markdown("—")
-        st.markdown('<hr class="divider">', unsafe_allow_html=True)
+    # 2열 그리드로 SKU 4개 배치
+    sku_pairs = [(SKUS[0], SKUS[1]), (SKUS[2], SKUS[3])]
+    for sku_left, sku_right in sku_pairs:
+        col_l, col_r = st.columns(2)
+        for col, sku in [(col_l, sku_left), (col_r, sku_right)]:
+            with col:
+                ranked = sorted(prov_data.items(), key=lambda x: -x[1][sku])
+                top5 = [(prov, d[sku]) for prov, d in ranked if d[sku] > 0][:5]
+                max_amt = top5[0][1] if top5 else 1
+                st.markdown(f"#### {SKU_LABELS[sku]}")
+                if not top5:
+                    st.markdown("<span style='color:#555;'>데이터 없음</span>", unsafe_allow_html=True)
+                    continue
+                for rank, (prov, amt) in enumerate(top5, 1):
+                    bar_w = int(amt / max_amt * 100)
+                    medal = ["🥇","🥈","🥉","4️⃣","5️⃣"][rank-1]
+                    st.markdown(
+                        f"<div style='margin-bottom:10px;'>"
+                        f"<div style='display:flex;justify-content:space-between;margin-bottom:3px;'>"
+                        f"<span>{medal} {prov}</span>"
+                        f"<span style='font-weight:700;'>{fmt_ty(amt)}</span>"
+                        f"</div>"
+                        f"<div style='background:#222;border-radius:3px;height:6px;'>"
+                        f"<div style='background:#4A9EFF;width:{bar_w}%;height:6px;border-radius:3px;'></div>"
+                        f"</div></div>",
+                        unsafe_allow_html=True
+                    )
+        st.markdown("---")
 
 
 def page_sa_analysis():
