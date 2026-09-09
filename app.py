@@ -315,10 +315,10 @@ def page_home():
           <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
         </a>""", unsafe_allow_html=True)
     with c2:
-        st.markdown(f"""<a href="{card_href('asm_meetings')}" target="_self" class="home-card">
-          <div class="home-icon">📋</div>
-          <div class="home-title">ASM 회의보고</div>
-          <div class="home-desc">ASM별 회의 보고 내용 확인</div>
+        st.markdown(f"""<a href="{card_href('sa_analysis', m=month)}" target="_self" class="home-card">
+          <div class="home-icon">📊</div>
+          <div class="home-title">세일즈 분석</div>
+          <div class="home-desc">세일즈맨별 매출 달성률 분석</div>
         </a>""", unsafe_allow_html=True)
 
 
@@ -448,11 +448,71 @@ def page_asm_npp_list():
                 )
 
 
-def page_asm_meetings():
+def page_sa_analysis():
     back_button("홈으로", "home")
-    st.markdown("## 📋 ASM 회의보고")
+    st.markdown("## 📊 세일즈 분석")
+    col_m, _ = st.columns([2, 6])
+    with col_m:
+        month = month_selector(state["month"])
+    if not month: return
     st.markdown("---")
-    st.info("준비 중입니다. 데이터 파일 수신 후 업데이트될 예정입니다.")
+
+    # 전체 세일즈맨 수집
+    month_data = records.get(str(month), {})
+    rows = []
+    for kpp_code, kpp_data in month_data.items():
+        npp_name = kpp_data.get("name", kpp_code)
+        asm_code = kpp_data.get("asm", "")
+        asm_name = ASM_FULL.get(asm_code, asm_code)
+        for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
+            total  = sa_data.get("total", 0)
+            target = sa_data.get("_target", 0)
+            pct    = total / target * 100 if target and target > 0 else None
+            display_name = sa_name.split("(NPP")[0].replace("Sale ", "").strip()
+            rows.append({
+                "name": display_name,
+                "npp":  npp_name,
+                "asm":  asm_name,
+                "total": total,
+                "target": target,
+                "pct": pct,
+            })
+
+    # 달성률 있는 것 / 없는 것 분리 후 달성률 내림차순 정렬
+    has_target = sorted([r for r in rows if r["pct"] is not None], key=lambda x: -x["pct"])
+    no_target  = sorted([r for r in rows if r["pct"] is None], key=lambda x: -x["total"])
+    all_rows = has_target + no_target
+
+    st.markdown(f"**{month}월 전체 세일즈맨 {len(all_rows)}명** (달성률 순)")
+    st.markdown('<hr class="divider">', unsafe_allow_html=True)
+
+    # 헤더
+    hdr = st.columns([0.4, 2.2, 2.5, 1.2, 1.3, 1.3, 1.1])
+    hdr[0].markdown("**#**")
+    hdr[1].markdown("**세일즈맨**")
+    hdr[2].markdown("**NPP**")
+    hdr[3].markdown("**ASM**")
+    hdr[4].markdown("**실적**")
+    hdr[5].markdown("**타겟**")
+    hdr[6].markdown("**달성률**")
+    st.markdown('<hr class="divider">', unsafe_allow_html=True)
+
+    for i, r in enumerate(all_rows, 1):
+        pct = r["pct"]
+        if pct is not None:
+            pct_color = "#10b981" if pct >= 100 else ("#f59e0b" if pct >= 70 else "#ef4444")
+            pct_str = f"<span style='color:{pct_color};font-weight:700;'>{pct:.0f}%</span>"
+        else:
+            pct_str = "<span style='color:#555;'>—</span>"
+
+        row = st.columns([0.4, 2.2, 2.5, 1.2, 1.3, 1.3, 1.1])
+        row[0].markdown(str(i))
+        row[1].markdown(r["name"])
+        row[2].markdown(f"<span style='font-size:0.82rem;color:#888;'>{r['npp'][:22]}</span>", unsafe_allow_html=True)
+        row[3].markdown(f"<span style='font-size:0.82rem;'>{r['asm']}</span>", unsafe_allow_html=True)
+        row[4].markdown(fmt(r["total"]) if r["total"] else "—")
+        row[5].markdown(fmt(r["target"]) if r["target"] else "—")
+        row[6].markdown(pct_str, unsafe_allow_html=True)
 
 
 def page_sales_asm():
@@ -832,7 +892,7 @@ PAGE_MAP = {
     "npp_inventory":  page_npp_inventory,
     "asm_saleout":    page_asm_saleout,
     "asm_npp_list":   page_asm_npp_list,
-    "asm_meetings":   page_asm_meetings,
+    "sa_analysis":    page_sa_analysis,
     "sales_asm":      page_sales_asm,
     "sales_npp_list": page_sales_npp_list,
     "sales_npp":      page_sales_npp,
