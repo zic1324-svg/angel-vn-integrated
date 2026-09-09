@@ -633,7 +633,7 @@ def page_sa_analysis():
     st.markdown("---")
 
     m = state["month"]
-    c1, c2, c3 = st.columns(3)
+    c1, c2 = st.columns(2)
     with c1:
         st.markdown(f"""<a href="?p=sa_analysis&sp=salesmen&m={m}" target="_self" class="home-card">
   <div class="home-icon">👤</div>
@@ -644,14 +644,8 @@ def page_sa_analysis():
         st.markdown(f"""<a href="?p=sa_analysis&sp=province&m={m}" target="_self" class="home-card">
   <div class="home-icon">🗺️</div>
   <div class="home-title">지역 분석</div>
-  <div class="home-desc">성별 매출 순위 및 SKU 비중</div>
+  <div class="home-desc">SKU별 상위 5개 성</div>
 </a>""", unsafe_allow_html=True)
-    with c3:
-        st.markdown("""<div class="home-card" style="opacity:0.4;cursor:default;pointer-events:none;">
-  <div class="home-icon">📋</div>
-  <div class="home-title">ASM</div>
-  <div class="home-desc">준비중</div>
-</div>""", unsafe_allow_html=True)
 
 
 def page_sales_asm():
