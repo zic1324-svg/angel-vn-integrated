@@ -636,7 +636,7 @@ def page_sales_npp():
             if tgt and tgt > 0:
                 pct = amt / tgt * 100
                 pct_color = "#10b981" if pct >= 100 else ("#f59e0b" if pct >= 70 else "#ef4444")
-                cell_html = f"{fmt(amt)}<br><span style='font-size:0.72rem;color:{pct_color};font-weight:700;'>{pct:.0f}%</span>"
+                cell_html = f"{fmt(amt)}<br><span style='color:{pct_color};font-weight:700;'>{pct:.0f}%</span>"
                 row[i + 1].markdown(cell_html, unsafe_allow_html=True)
             else:
                 row[i + 1].markdown(fmt(amt) if amt else "—")
