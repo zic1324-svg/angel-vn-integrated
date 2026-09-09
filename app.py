@@ -729,6 +729,104 @@ def page_npp_stock():
     tot_col[2].markdown(f"**{fmt_inv(total_inv_amt)}**")
     tot_col[3].markdown("")
 
+    # ── 재고금액 추이 차트 ────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("#### 📈 재고금액 추이")
+
+    inv_series, opt_series, labels = [], [], []
+    for m in range(1, month + 1):
+        m_inv = inv_records.get(str(m), {}).get(code, {})
+        inv_amt_m = sum(v.get("amt", 0) for k, v in m_inv.items()
+                        if not k.startswith("_") and isinstance(v, dict))
+        inv_series.append(inv_amt_m)
+        if m >= 3:
+            rolling = [records.get(str(mx), {}).get(code, {}).get("total", 0)
+                       for mx in range(m - 2, m + 1)]
+            opt_series.append(sum(rolling) / 3 * 6)
+        else:
+            opt_series.append(None)
+        labels.append(f"{m}월")
+
+    n = len(inv_series)
+    W, H = 820, 220
+    PAD_L, PAD_R, PAD_T, PAD_B = 70, 20, 20, 40
+    CW = W - PAD_L - PAD_R
+    CH = H - PAD_T - PAD_B
+
+    all_vals = [v for v in inv_series + opt_series if v is not None and v > 0]
+    y_max = max(all_vals) * 1.15 if all_vals else 1
+    y_min = 0
+
+    def px(i, v):
+        x = PAD_L + i * CW / max(n - 1, 1)
+        y = PAD_T + CH - (v - y_min) / (y_max - y_min) * CH
+        return x, y
+
+    def pts_str(series):
+        return " ".join(f"{px(i,v)[0]:.1f},{px(i,v)[1]:.1f}"
+                        for i, v in enumerate(series) if v is not None)
+
+    # 적정재고 연속 구간 (None 건너뜀)
+    opt_segments, seg = [], []
+    for i, v in enumerate(opt_series):
+        if v is not None:
+            seg.append((i, v))
+        else:
+            if seg: opt_segments.append(seg)
+            seg = []
+    if seg: opt_segments.append(seg)
+
+    # Y축 눈금 (4단계)
+    y_ticks = [y_min + (y_max - y_min) * k / 4 for k in range(5)]
+
+    svg_lines = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:{W}px;">']
+
+    # 격자
+    for yv in y_ticks:
+        _, yp = px(0, yv)
+        svg_lines.append(f'<line x1="{PAD_L}" y1="{yp:.1f}" x2="{W-PAD_R}" y2="{yp:.1f}" stroke="rgba(128,128,128,0.15)" stroke-width="1"/>')
+
+    # Y축 레이블
+    for yv in y_ticks:
+        _, yp = px(0, yv)
+        lbl = fmt_inv(yv) if yv > 0 else "0"
+        svg_lines.append(f'<text x="{PAD_L-6}" y="{yp+4:.1f}" text-anchor="end" font-size="11" fill="rgba(128,128,128,0.8)">{lbl}</text>')
+
+    # X축 레이블
+    for i, lbl in enumerate(labels):
+        xp, _ = px(i, 0)
+        svg_lines.append(f'<text x="{xp:.1f}" y="{H-6}" text-anchor="middle" font-size="11" fill="rgba(128,128,128,0.8)">{lbl}</text>')
+
+    # 실재고 영역 채우기
+    if n > 1:
+        poly_pts = " ".join(f"{px(i,v)[0]:.1f},{px(i,v)[1]:.1f}" for i, v in enumerate(inv_series))
+        x0, _ = px(0, 0); xn, _ = px(n-1, 0); _, yb = px(0, 0)
+        svg_lines.append(f'<polygon points="{x0:.1f},{PAD_T+CH:.1f} {poly_pts} {xn:.1f},{PAD_T+CH:.1f}" fill="#4A9EFF" opacity="0.1"/>')
+        svg_lines.append(f'<polyline points="{poly_pts}" fill="none" stroke="#4A9EFF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>')
+
+    # 적정재고 선 (점선)
+    for seg in opt_segments:
+        seg_pts = " ".join(f"{px(i,v)[0]:.1f},{px(i,v)[1]:.1f}" for i,v in seg)
+        svg_lines.append(f'<polyline points="{seg_pts}" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="6 3" stroke-linejoin="round" stroke-linecap="round"/>')
+
+    # 데이터 점
+    for i, v in enumerate(inv_series):
+        xp, yp = px(i, v)
+        svg_lines.append(f'<circle cx="{xp:.1f}" cy="{yp:.1f}" r="3.5" fill="#4A9EFF"/>')
+    for i, v in enumerate(opt_series):
+        if v is not None:
+            xp, yp = px(i, v)
+            svg_lines.append(f'<circle cx="{xp:.1f}" cy="{yp:.1f}" r="3" fill="#10b981"/>')
+
+    # 범례
+    svg_lines.append(f'<rect x="{PAD_L}" y="{PAD_T}" width="12" height="3" rx="1" fill="#4A9EFF"/>')
+    svg_lines.append(f'<text x="{PAD_L+16}" y="{PAD_T+7}" font-size="11" fill="rgba(128,128,128,0.9)">실재고</text>')
+    svg_lines.append(f'<line x1="{PAD_L+70}" y1="{PAD_T+1.5}" x2="{PAD_L+82}" y2="{PAD_T+1.5}" stroke="#10b981" stroke-width="2" stroke-dasharray="4 2"/>')
+    svg_lines.append(f'<text x="{PAD_L+86}" y="{PAD_T+7}" font-size="11" fill="rgba(128,128,128,0.9)">적정재고</text>')
+
+    svg_lines.append('</svg>')
+    st.markdown("".join(svg_lines), unsafe_allow_html=True)
+
 
 # ── 라우팅 ───────────────────────────────────────────────────────────
 PAGE_MAP = {
