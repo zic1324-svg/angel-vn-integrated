@@ -296,10 +296,8 @@ def inv_status(code, month, inv_amt):
     optimal = avg * 6
     ratio = (inv_amt - optimal) / optimal * 100
     optimal_str = fmt_inv(optimal)
-    if ratio > 20:
+    if ratio > 0:
         return f"+{ratio:.0f}% 초과", "npp-half-months-warn", optimal_str
-    elif ratio >= -20:
-        return f"{ratio:+.0f}% 적정", "npp-half-months", optimal_str
     else:
         return f"{ratio:.0f}% 부족", "npp-half-months", optimal_str
 
