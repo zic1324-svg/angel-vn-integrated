@@ -565,29 +565,25 @@ def page_sa_analysis():
     st.markdown("---")
 
     m = state["month"]
-    cards = [
-        {"sp": "salesmen", "icon": "👤", "title": "세일즈맨", "desc": "분기별 달성률 순위"},
-        {"sp": None,        "icon": "📦", "title": "NPP",      "desc": "준비중"},
-        {"sp": None,        "icon": "📋", "title": "ASM",      "desc": "준비중"},
-    ]
-    cols = st.columns(3)
-    for col, c in zip(cols, cards):
-        with col:
-            if c["sp"]:
-                href = f"?p=sa_analysis&sp={c['sp']}&m={m}"
-                col.markdown(
-                    link(href, "menu-card",
-                    f'<div class="menu-icon">{c["icon"]}</div>'
-                    f'<div class="menu-title">{c["title"]}</div>'
-                    f'<div class="menu-sub">{c["desc"]}</div>'),
-                    unsafe_allow_html=True)
-            else:
-                col.markdown(
-                    f'<div class="menu-card" style="opacity:0.45;cursor:default;">'
-                    f'<div class="menu-icon">{c["icon"]}</div>'
-                    f'<div class="menu-title">{c["title"]}</div>'
-                    f'<div class="menu-sub">{c["desc"]}</div></div>',
-                    unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(f"""<a href="?p=sa_analysis&sp=salesmen&m={m}" target="_self" class="home-card">
+  <div class="home-icon">👤</div>
+  <div class="home-title">세일즈맨</div>
+  <div class="home-desc">분기별 달성률 순위</div>
+</a>""", unsafe_allow_html=True)
+    with c2:
+        st.markdown("""<div class="home-card" style="opacity:0.4;cursor:default;pointer-events:none;">
+  <div class="home-icon">📦</div>
+  <div class="home-title">NPP</div>
+  <div class="home-desc">준비중</div>
+</div>""", unsafe_allow_html=True)
+    with c3:
+        st.markdown("""<div class="home-card" style="opacity:0.4;cursor:default;pointer-events:none;">
+  <div class="home-icon">📋</div>
+  <div class="home-title">ASM</div>
+  <div class="home-desc">준비중</div>
+</div>""", unsafe_allow_html=True)
 
 
 def page_sales_asm():
