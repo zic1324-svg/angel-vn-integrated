@@ -285,22 +285,23 @@ def sparkline_svg(values, width=120, height=32, color="#4A9EFF"):
     )
 
 def inv_status(code, month, inv_amt):
-    """적정재고 대비 초과율 계산. 반환: (display_str, css_class)
+    """적정재고 대비 초과율 계산. 반환: (ratio_str, css_class, optimal_str)
     적정재고 = 직전 3개월 평균 sale out × 6. month<3 또는 데이터 없으면 빈 문자열."""
     if month < 3 or inv_amt <= 0:
-        return "", "npp-half-months"
+        return "", "npp-half-months", ""
     rolling = [records.get(str(m), {}).get(code, {}).get("total", 0) for m in range(month - 2, month + 1)]
     avg = sum(rolling) / 3
     if avg <= 0:
-        return "", "npp-half-months"
+        return "", "npp-half-months", ""
     optimal = avg * 6
     ratio = (inv_amt - optimal) / optimal * 100
+    optimal_str = fmt_inv(optimal)
     if ratio > 20:
-        return f"+{ratio:.0f}% 초과", "npp-half-months-warn"
+        return f"+{ratio:.0f}% 초과", "npp-half-months-warn", optimal_str
     elif ratio >= -20:
-        return f"{ratio:+.0f}% 적정", "npp-half-months"
+        return f"{ratio:+.0f}% 적정", "npp-half-months", optimal_str
     else:
-        return f"{ratio:.0f}% 부족", "npp-half-months"
+        return f"{ratio:.0f}% 부족", "npp-half-months", optimal_str
 
 # ── 페이지 함수들 ────────────────────────────────────────────────────
 
@@ -420,7 +421,7 @@ def page_asm_npp_list():
                 if not sk.startswith("_")
             )
             inv_str = fmt_inv(npp_inv_amt) if npp_inv_amt > 0 else "-"
-            months_str, months_cls = inv_status(code, month, npp_inv_amt)
+            months_str, months_cls, optimal_str = inv_status(code, month, npp_inv_amt)
             wrap_cls = "npp-card-wrap" + (" npp-no-so" if not has_so else "")
             so_display = fmt_inv(saleout_total) if has_so else "없음"
             so_badge = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
@@ -441,6 +442,7 @@ def page_asm_npp_list():
                     f'<a href="{href_inv}" target="_self" class="npp-half">'
                     f'<div class="npp-half-lbl">재고금액</div>'
                     f'<div class="npp-half-amt npp-half-inv">{inv_str}</div>'
+                    f'<div class="npp-half-months" style="color:#888;">{"적정 " + optimal_str if optimal_str else ""}</div>'
                     f'<div class="{months_cls}">{months_str}</div>'
                     f'</a>'
                     f'</div>'
@@ -507,7 +509,7 @@ def page_sales_npp_list():
                 if not sk.startswith("_")
             )
             inv_str = fmt_inv(npp_inv_amt) if npp_inv_amt > 0 else "-"
-            months_str, months_cls = inv_status(code, month, npp_inv_amt)
+            months_str, months_cls, optimal_str = inv_status(code, month, npp_inv_amt)
             wrap_cls = "npp-card-wrap" + (" npp-no-so" if not has_so else "")
             so_display = fmt_inv(saleout_total) if has_so else "없음"
             so_badge = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
@@ -528,6 +530,7 @@ def page_sales_npp_list():
                     f'<a href="{href_inv}" target="_self" class="npp-half">'
                     f'<div class="npp-half-lbl">재고금액</div>'
                     f'<div class="npp-half-amt npp-half-inv">{inv_str}</div>'
+                    f'<div class="npp-half-months" style="color:#888;">{"적정 " + optimal_str if optimal_str else ""}</div>'
                     f'<div class="{months_cls}">{months_str}</div>'
                     f'</a>'
                     f'</div>'
