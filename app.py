@@ -547,7 +547,7 @@ def page_sa_analysis():
         row = st.columns([0.4, 2.2, 2.5, 1.2, 1.3, 1.3, 1.1])
         row[0].markdown(str(i))
         row[1].markdown(r["name"])
-        row[2].markdown(f"<span style='font-size:0.82rem;color:#888;'>{r.get('npp','')[:22]}</span>", unsafe_allow_html=True)
+        row[2].markdown(f"<span style='font-size:0.82rem;color:#888;'>{r.get('npp','')}</span>", unsafe_allow_html=True)
         row[3].markdown(f"<span style='font-size:0.82rem;'>{r.get('asm','')}</span>", unsafe_allow_html=True)
         row[4].markdown(fmt(r["total"]) if r["total"] else "—")
         row[5].markdown(fmt(r["target"]) if r["target"] else "—")
