@@ -624,9 +624,18 @@ def page_sales_npp():
         ]
         sku_str = ", ".join(active_skus)
 
+        target = sa_data.get("_target", 0)
+        total_this_month = monthly[month - 1]
+        if target and target > 0:
+            pct = total_this_month / target * 100
+            pct_color = "#52c41a" if pct >= 100 else ("#fa8c16" if pct >= 70 else "#ff7875")
+            target_html = f"<div style='font-size:0.75rem;color:#888;margin-top:2px;'>타겟 {fmt(target)} <span style='color:{pct_color};font-weight:700;'>→ {pct:.0f}%</span></div>"
+        else:
+            target_html = ""
+
         row = st.columns(col_widths)
         display_name = sa_name.split("(NPP")[0].replace("Sale ", "").strip()
-        name_html = f"**{display_name}** &nbsp;({sku_str})" if sku_str else f"**{display_name}**"
+        name_html = (f"**{display_name}** &nbsp;({sku_str})" if sku_str else f"**{display_name}**") + target_html
         row[0].markdown(name_html, unsafe_allow_html=True)
         for i in range(month):
             row[i + 1].markdown(fmt(monthly[i]))
