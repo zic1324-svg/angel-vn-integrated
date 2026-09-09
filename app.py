@@ -542,7 +542,7 @@ def page_sa_salesmen():
         pct = r["pct"]
         if pct is not None:
             pct_color = "#10b981" if pct >= 100 else ("#f59e0b" if pct >= 70 else "#ef4444")
-            pct_str = f"<span style='color:{pct_color};font-weight:700;'>{pct:.0f}%</span>"
+            pct_str = f"<span style='color:{pct_color};font-weight:700;'>{pct:.1f}%</span>"
         else:
             pct_str = "<span style='color:#555;'>—</span>"
         row = st.columns([0.4, 2.2, 2.5, 1.2, 1.3, 1.3, 1.1])
@@ -829,7 +829,7 @@ def page_sales_npp():
             if tgt and tgt > 0:
                 pct = amt / tgt * 100
                 pct_color = "#10b981" if pct >= 100 else ("#f59e0b" if pct >= 70 else "#ef4444")
-                cell_html = f"{fmt(amt)}<br><span style='color:{pct_color};font-weight:700;'>{pct:.0f}%</span>"
+                cell_html = f"{fmt(amt)}<br><span style='color:{pct_color};font-weight:700;'>{pct:.1f}%</span>"
                 row[i + 1].markdown(cell_html, unsafe_allow_html=True)
             else:
                 row[i + 1].markdown(fmt(amt) if amt else "—")
