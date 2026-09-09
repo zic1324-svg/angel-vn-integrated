@@ -628,7 +628,7 @@ def page_sales_npp():
         total_this_month = monthly[month - 1]
         if target and target > 0:
             pct = total_this_month / target * 100
-            pct_color = "#52c41a" if pct >= 100 else ("#fa8c16" if pct >= 70 else "#ff7875")
+            pct_color = "#10b981" if pct >= 100 else ("#f59e0b" if pct >= 70 else "#ef4444")
             target_html = f"<div style='font-size:0.75rem;color:#888;margin-top:2px;'>타겟 {fmt(target)} <span style='color:{pct_color};font-weight:700;'>→ {pct:.0f}%</span></div>"
         else:
             target_html = ""
