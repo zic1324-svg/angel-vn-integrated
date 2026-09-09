@@ -606,7 +606,7 @@ def page_sa_province():
                     bar_w = int(amt / max_amt * 100)
                     medal = ["🥇","🥈","🥉","4️⃣","5️⃣"][rank-1]
                     st.markdown(
-                        f"<div style='margin-bottom:10px;max-width:320px;'>"
+                        f"<div style='margin-bottom:10px;max-width:420px;'>"
                         f"<div style='display:flex;justify-content:space-between;margin-bottom:3px;'>"
                         f"<span>{medal} {prov}</span>"
                         f"<span style='font-weight:700;'>{fmt_ty(amt)}</span>"
