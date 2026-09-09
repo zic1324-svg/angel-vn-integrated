@@ -284,13 +284,30 @@ def sparkline_svg(values, width=120, height=32, color="#4A9EFF"):
         f'</svg>'
     )
 
+def quarter_months(month):
+    """해당 월이 속한 분기의 1월~해당월까지 월 목록 반환"""
+    if month <= 3:
+        return list(range(1, month + 1))
+    elif month <= 6:
+        return list(range(4, month + 1))
+    else:
+        return list(range(7, month + 1))
+
+def quarter_avg_sale(code, month):
+    """분기 평균 sale out 계산"""
+    ms = quarter_months(month)
+    vals = [records.get(str(m), {}).get(code, {}).get("total", 0) for m in ms]
+    total = sum(vals)
+    count = sum(1 for v in vals if v > 0)
+    if count == 0:
+        return 0
+    return total / len(ms)
+
 def inv_status(code, month, inv_amt):
-    """적정재고 대비 초과율 계산. 반환: (ratio_str, css_class, optimal_str)
-    적정재고 = 직전 3개월 평균 sale out × 6. month<3 또는 데이터 없으면 빈 문자열."""
-    if month < 3 or inv_amt <= 0:
+    """적정재고 대비 초과율. 적정재고 = 분기 평균 sale out × 6"""
+    if inv_amt <= 0:
         return "", "npp-half-months", ""
-    rolling = [records.get(str(m), {}).get(code, {}).get("total", 0) for m in range(month - 2, month + 1)]
-    avg = sum(rolling) / 3
+    avg = quarter_avg_sale(code, month)
     if avg <= 0:
         return "", "npp-half-months", ""
     optimal = avg * 6
@@ -451,50 +468,73 @@ def page_asm_npp_list():
 def page_sa_analysis():
     back_button("홈으로", "home")
     st.markdown("## 📊 세일즈 분석")
-    col_m, _ = st.columns([2, 6])
-    with col_m:
-        month = month_selector(state["month"])
-    if not month: return
+
+    QUARTERS = {
+        "Q1 (1~3월)": [1, 2, 3],
+        "Q2 (4~6월)": [4, 5, 6],
+        "Q3 (7~8월)": [7, 8],
+    }
+    # 현재 월 기준으로 기본 분기 선택
+    cur_month = state["month"]
+    default_q = "Q1 (1~3월)"
+    for q, ms in QUARTERS.items():
+        if cur_month in ms:
+            default_q = q
+    q_keys = list(QUARTERS.keys())
+    col_q, _ = st.columns([2, 6])
+    with col_q:
+        selected_q = st.selectbox("분기", q_keys, index=q_keys.index(default_q), key="q_sel")
+    q_months = QUARTERS[selected_q]
     st.markdown("---")
 
-    # 전체 세일즈맨 수집
-    month_data = records.get(str(month), {})
+    # 분기 내 세일즈맨별 실적·타겟 합산 (세일즈맨 이름 기준, 마지막 월 NPP/ASM)
+    sa_map = {}  # key: sa_name
+    for m in q_months:
+        m_data = records.get(str(m), {})
+        for kpp_code, kpp_data in m_data.items():
+            npp_name = kpp_data.get("name", kpp_code)
+            asm_code = kpp_data.get("asm", "")
+            for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
+                if sa_name not in sa_map:
+                    sa_map[sa_name] = {"name": sa_name.split("(NPP")[0].replace("Sale ", "").strip(), "total": 0, "target": 0}
+                sa_map[sa_name]["npp"]    = npp_name
+                sa_map[sa_name]["asm"]    = ASM_FULL.get(asm_code, asm_code)
+                sa_map[sa_name]["total"]  += sa_data.get("total", 0)
+                sa_map[sa_name]["target"] += sa_data.get("_target", 0)
+
     rows = []
-    for kpp_code, kpp_data in month_data.items():
-        npp_name = kpp_data.get("name", kpp_code)
-        asm_code = kpp_data.get("asm", "")
-        asm_name = ASM_FULL.get(asm_code, asm_code)
-        for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
-            total  = sa_data.get("total", 0)
-            target = sa_data.get("_target", 0)
-            pct    = total / target * 100 if target and target > 0 else None
-            display_name = sa_name.split("(NPP")[0].replace("Sale ", "").strip()
-            rows.append({
-                "name": display_name,
-                "npp":  npp_name,
-                "asm":  asm_name,
-                "total": total,
-                "target": target,
-                "pct": pct,
-            })
+    for r in sa_map.values():
+        t, tg = r["total"], r["target"]
+        r["pct"] = t / tg * 100 if tg > 0 else None
+        rows.append(r)
 
-    # 달성률 있는 것 / 없는 것 분리 후 달성률 내림차순 정렬
-    has_target = sorted([r for r in rows if r["pct"] is not None], key=lambda x: -x["pct"])
-    no_target  = sorted([r for r in rows if r["pct"] is None], key=lambda x: -x["total"])
-    all_rows = has_target + no_target
+    # 정렬 상태
+    sort_key = st.session_state.get("sa_sort", "pct")
+    col_sort, _ = st.columns([3, 5])
+    with col_sort:
+        sort_label = "달성률 순" if sort_key == "pct" else "실적 순"
+        if st.button(f"정렬: {sort_label} (클릭하여 전환)", key="sa_sort_btn"):
+            st.session_state["sa_sort"] = "total" if sort_key == "pct" else "pct"
+            st.rerun()
 
-    st.markdown(f"**{month}월 전체 세일즈맨 {len(all_rows)}명** (달성률 순)")
+    def sort_rows(rows, key):
+        has_target = [r for r in rows if r["pct"] is not None]
+        no_target  = [r for r in rows if r["pct"] is None]
+        if key == "pct":
+            has_target.sort(key=lambda x: -x["pct"])
+        else:
+            has_target.sort(key=lambda x: -x["total"])
+        no_target.sort(key=lambda x: -x["total"])
+        return has_target + no_target
+
+    all_rows = sort_rows(rows, sort_key)
+
+    st.markdown(f"**{selected_q} 전체 세일즈맨 {len(all_rows)}명**")
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
-    # 헤더
     hdr = st.columns([0.4, 2.2, 2.5, 1.2, 1.3, 1.3, 1.1])
-    hdr[0].markdown("**#**")
-    hdr[1].markdown("**세일즈맨**")
-    hdr[2].markdown("**NPP**")
-    hdr[3].markdown("**ASM**")
-    hdr[4].markdown("**실적**")
-    hdr[5].markdown("**타겟**")
-    hdr[6].markdown("**달성률**")
+    for col, label in zip(hdr, ["**#**","**세일즈맨**","**NPP**","**ASM**","**실적**","**타겟**","**달성률**"]):
+        col.markdown(label)
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
     for i, r in enumerate(all_rows, 1):
@@ -504,12 +544,11 @@ def page_sa_analysis():
             pct_str = f"<span style='color:{pct_color};font-weight:700;'>{pct:.0f}%</span>"
         else:
             pct_str = "<span style='color:#555;'>—</span>"
-
         row = st.columns([0.4, 2.2, 2.5, 1.2, 1.3, 1.3, 1.1])
         row[0].markdown(str(i))
         row[1].markdown(r["name"])
-        row[2].markdown(f"<span style='font-size:0.82rem;color:#888;'>{r['npp'][:22]}</span>", unsafe_allow_html=True)
-        row[3].markdown(f"<span style='font-size:0.82rem;'>{r['asm']}</span>", unsafe_allow_html=True)
+        row[2].markdown(f"<span style='font-size:0.82rem;color:#888;'>{r.get('npp','')[:22]}</span>", unsafe_allow_html=True)
+        row[3].markdown(f"<span style='font-size:0.82rem;'>{r.get('asm','')}</span>", unsafe_allow_html=True)
         row[4].markdown(fmt(r["total"]) if r["total"] else "—")
         row[5].markdown(fmt(r["target"]) if r["target"] else "—")
         row[6].markdown(pct_str, unsafe_allow_html=True)
@@ -797,12 +836,8 @@ def page_npp_stock():
         inv_amt_m = sum(v.get("amt", 0) for k, v in m_inv.items()
                         if not k.startswith("_") and isinstance(v, dict))
         inv_series.append(inv_amt_m)
-        if m >= 3:
-            rolling = [records.get(str(mx), {}).get(code, {}).get("total", 0)
-                       for mx in range(m - 2, m + 1)]
-            opt_series.append(sum(rolling) / 3 * 6)
-        else:
-            opt_series.append(None)
+        avg_m = quarter_avg_sale(code, m)
+        opt_series.append(avg_m * 6 if avg_m > 0 else None)
         labels.append(f"{m}월")
 
     n = len(inv_series)
