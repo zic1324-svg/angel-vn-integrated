@@ -201,6 +201,7 @@ def get_state():
         "selected_npp": p.get("npp", None),
         "month":        int(p.get("m", 8)),
         "src":          p.get("src", "asm"),
+        "sp":           p.get("sp", None),
     }
 
 def set_state(page, **kwargs):
@@ -239,6 +240,7 @@ def back_button(label, page, **kwargs):
     if "asm"   in kwargs: params["asm"] = kwargs["asm"]
     if "npp"   in kwargs: params["npp"] = kwargs["npp"]
     if "month" in kwargs: params["m"]   = str(kwargs["month"])
+    if "sp"    in kwargs: params["sp"]  = kwargs["sp"]
     query = "&".join(f"{k}={v}" for k, v in params.items())
     month = kwargs.get("month", state["month"])
     st.markdown(
@@ -465,16 +467,16 @@ def page_asm_npp_list():
                 )
 
 
-def page_sa_analysis():
-    back_button("홈으로", "home")
-    st.markdown("## 📊 세일즈 분석")
+def page_sa_salesmen():
+    """세일즈 분석 > 세일즈맨 서브페이지"""
+    back_button("세일즈 분석으로", "sa_analysis")
+    st.markdown("## 👤 세일즈맨")
 
     QUARTERS = {
         "Q1 (1~3월)": [1, 2, 3],
         "Q2 (4~6월)": [4, 5, 6],
         "Q3 (7~8월)": [7, 8],
     }
-    # 현재 월 기준으로 기본 분기 선택
     cur_month = state["month"]
     default_q = "Q1 (1~3월)"
     for q, ms in QUARTERS.items():
@@ -487,8 +489,7 @@ def page_sa_analysis():
     q_months = QUARTERS[selected_q]
     st.markdown("---")
 
-    # 분기 내 세일즈맨별 실적·타겟 합산 (세일즈맨 이름 기준, 마지막 월 NPP/ASM)
-    sa_map = {}  # key: sa_name
+    sa_map = {}
     for m in q_months:
         m_data = records.get(str(m), {})
         for kpp_code, kpp_data in m_data.items():
@@ -508,7 +509,6 @@ def page_sa_analysis():
         r["pct"] = t / tg * 100 if tg > 0 else None
         rows.append(r)
 
-    # 정렬 상태
     sort_key = st.session_state.get("sa_sort", "pct")
     col_sort, _ = st.columns([3, 5])
     with col_sort:
@@ -552,6 +552,42 @@ def page_sa_analysis():
         row[4].markdown(fmt(r["total"]) if r["total"] else "—")
         row[5].markdown(fmt(r["target"]) if r["target"] else "—")
         row[6].markdown(pct_str, unsafe_allow_html=True)
+
+
+def page_sa_analysis():
+    sp = state.get("sp")
+    if sp == "salesmen":
+        page_sa_salesmen()
+        return
+
+    back_button("홈으로", "home")
+    st.markdown("## 📊 세일즈 분석")
+    st.markdown("---")
+
+    m = state["month"]
+    cards = [
+        {"sp": "salesmen", "icon": "👤", "title": "세일즈맨", "desc": "분기별 달성률 순위"},
+        {"sp": None,        "icon": "📦", "title": "NPP",      "desc": "준비중"},
+        {"sp": None,        "icon": "📋", "title": "ASM",      "desc": "준비중"},
+    ]
+    cols = st.columns(3)
+    for col, c in zip(cols, cards):
+        with col:
+            if c["sp"]:
+                href = f"?p=sa_analysis&sp={c['sp']}&m={m}"
+                col.markdown(
+                    link(href, "menu-card",
+                    f'<div class="menu-icon">{c["icon"]}</div>'
+                    f'<div class="menu-title">{c["title"]}</div>'
+                    f'<div class="menu-sub">{c["desc"]}</div>'),
+                    unsafe_allow_html=True)
+            else:
+                col.markdown(
+                    f'<div class="menu-card" style="opacity:0.45;cursor:default;">'
+                    f'<div class="menu-icon">{c["icon"]}</div>'
+                    f'<div class="menu-title">{c["title"]}</div>'
+                    f'<div class="menu-sub">{c["desc"]}</div></div>',
+                    unsafe_allow_html=True)
 
 
 def page_sales_asm():
