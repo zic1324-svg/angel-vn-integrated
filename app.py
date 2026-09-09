@@ -613,10 +613,12 @@ def page_sales_npp():
     for sa_name, sa_data in sorted_sa:
         skus = sa_data.get("skus", {})
         monthly = []
+        monthly_target = []
         for m in MONTHS:
             m_npp = records.get(str(m), {}).get(code, {})
             m_sa  = m_npp.get("salesmen", {}).get(sa_name, {})
             monthly.append(m_sa.get("total", 0))
+            monthly_target.append(m_sa.get("_target", 0))
 
         active_skus = [
             SKU_SHORT[sku] for sku in SKU_LIST
@@ -624,21 +626,20 @@ def page_sales_npp():
         ]
         sku_str = ", ".join(active_skus)
 
-        target = sa_data.get("_target", 0)
-        total_this_month = monthly[month - 1]
-        if target and target > 0:
-            pct = total_this_month / target * 100
-            pct_color = "#10b981" if pct >= 100 else ("#f59e0b" if pct >= 70 else "#ef4444")
-            target_html = f"<div style='font-size:0.75rem;color:#888;margin-top:2px;'>타겟 {fmt(target)} <span style='color:{pct_color};font-weight:700;'>→ {pct:.0f}%</span></div>"
-        else:
-            target_html = ""
-
         row = st.columns(col_widths)
         display_name = sa_name.split("(NPP")[0].replace("Sale ", "").strip()
-        name_html = (f"**{display_name}** &nbsp;({sku_str})" if sku_str else f"**{display_name}**") + target_html
+        name_html = f"**{display_name}**" + (f" &nbsp;({sku_str})" if sku_str else "")
         row[0].markdown(name_html, unsafe_allow_html=True)
         for i in range(month):
-            row[i + 1].markdown(fmt(monthly[i]))
+            amt = monthly[i]
+            tgt = monthly_target[i]
+            if tgt and tgt > 0:
+                pct = amt / tgt * 100
+                pct_color = "#10b981" if pct >= 100 else ("#f59e0b" if pct >= 70 else "#ef4444")
+                cell_html = f"{fmt(amt)}<br><span style='font-size:0.72rem;color:{pct_color};font-weight:700;'>{pct:.0f}%</span>"
+                row[i + 1].markdown(cell_html, unsafe_allow_html=True)
+            else:
+                row[i + 1].markdown(fmt(amt) if amt else "—")
         svg = sparkline_svg(monthly[:month], width=140, height=36, color="#4A9EFF")
         row[-1].markdown(svg, unsafe_allow_html=True)
 
