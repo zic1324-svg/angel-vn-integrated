@@ -132,6 +132,14 @@ ASM_FULL = {
 }
 MONTHS = list(range(1, 13))
 
+# 코드 변경된 동일 업체 alias (구코드 → 신코드)
+KPP_ALIAS = {
+    'KPP.HPH.0001': 'KPP.HPH.00003',
+}
+
+def normalize_kpp(code):
+    return KPP_ALIAS.get(code, code)
+
 # ASM별 NPP 고정 표시 순서 (2026년 7월 재고파일 컬럼 순서 기준 — 변경 금지)
 NPP_ORDER = {
     'TU':    ['KPP.HAN.0009','KPP.PTH.0008','KPP.BNI.0005','KPP.BGI.0004',
@@ -191,6 +199,13 @@ def load_data():
 records, inv_records, load_error = load_data()
 if load_error:
     st.error(f"데이터 로드 실패: {load_error}")
+
+# KPP 코드 alias 정규화 (구코드 → 신코드로 통합 표시)
+for _ms in list(records.keys()):
+    for _old, _new in KPP_ALIAS.items():
+        if _old in records[_ms] and _new not in records[_ms]:
+            records[_ms][_new] = records[_ms].pop(_old)
+            records[_ms][_new]["_code_alias"] = _old
 
 # ── 쿼리 파라미터로 상태 관리 ─────────────────────────────────────────
 def get_state():
