@@ -375,7 +375,9 @@ def _asm_grid(page_target, btn_label, month):
         asm_totals.setdefault(asm, {"total": 0, "npps": set(), "salesmen": set()})
         asm_totals[asm]["npps"].add(code)
 
-    sorted_asms = sorted(asm_totals.items(), key=lambda x: -x[1]["total"])
+    ASM_DISPLAY_ORDER = ['TU','VINH','TU,HOI','LAM','HAI','QUOC','HUNG','NHU','VAN']
+    sorted_asms = sorted(asm_totals.items(),
+                         key=lambda x: ASM_DISPLAY_ORDER.index(x[0]) if x[0] in ASM_DISPLAY_ORDER else 99)
     COLS = 4
     rows = [sorted_asms[i:i+COLS] for i in range(0, len(sorted_asms), COLS)]
     for row in rows:
