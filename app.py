@@ -380,7 +380,9 @@ def _asm_grid(page_target, btn_label, month):
                          key=lambda x: ASM_DISPLAY_ORDER.index(x[0]) if x[0] in ASM_DISPLAY_ORDER else 99)
     COLS = 4
     rows = [sorted_asms[i:i+COLS] for i in range(0, len(sorted_asms), COLS)]
-    for row in rows:
+    for ri, row in enumerate(rows):
+        if ri > 0:
+            st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
         cols = st.columns(COLS)
         for col, (asm_code, data) in zip(cols, row):
             full_name = ASM_FULL.get(asm_code, asm_code)
