@@ -498,14 +498,18 @@ def page_sa_salesmen():
             for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
                 key = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
                 if key not in sa_map:
-                    sa_map[key] = {"name": key.split("(NPP")[0].strip(), "total": 0, "target": 0}
+                    sa_map[key] = {"name": key.split("(NPP")[0].strip(), "total": 0, "target": 0, "months": 0}
                 sa_map[key]["npp"]    = npp_name
                 sa_map[key]["asm"]    = ASM_FULL.get(asm_code, asm_code)
                 sa_map[key]["total"]  += sa_data.get("total", 0)
                 sa_map[key]["target"] += sa_data.get("_target", 0)
+                sa_map[key]["months"] += 1
 
     rows = []
     for r in sa_map.values():
+        n = r["months"] if r["months"] > 0 else 1
+        r["total"]  = r["total"]  / n
+        r["target"] = r["target"] / n
         t, tg = r["total"], r["target"]
         r["pct"] = t / tg * 100 if tg > 0 else None
         rows.append(r)
