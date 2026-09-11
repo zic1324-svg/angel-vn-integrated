@@ -499,8 +499,9 @@ def page_sa_salesmen():
                 key = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
                 if key not in sa_map:
                     sa_map[key] = {"name": key.split("(NPP")[0].strip(), "total": 0, "target": 0, "months": 0}
-                sa_map[key]["npp"]    = npp_name
-                sa_map[key]["asm"]    = ASM_FULL.get(asm_code, asm_code)
+                sa_map[key]["npp"]      = npp_name
+                sa_map[key]["province"] = kpp_data.get("province", "")
+                sa_map[key]["asm"]      = ASM_FULL.get(asm_code, asm_code)
                 sa_map[key]["total"]  += sa_data.get("total", 0)
                 sa_map[key]["target"] += sa_data.get("_target", 0)
                 sa_map[key]["months"] += 1
@@ -537,8 +538,8 @@ def page_sa_salesmen():
     st.markdown(f"**{selected_q} 전체 세일즈맨 {len(all_rows)}명**")
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
-    hdr = st.columns([0.4, 2.2, 2.5, 1.2, 1.3, 1.3, 1.1])
-    for col, label in zip(hdr, ["**#**","**세일즈맨**","**NPP**","**ASM**","**실적**","**타겟**","**달성률**"]):
+    hdr = st.columns([0.4, 2.0, 2.2, 1.0, 1.0, 1.3, 1.3, 1.1])
+    for col, label in zip(hdr, ["**#**","**세일즈맨**","**NPP**","**성**","**ASM**","**실적**","**타겟**","**달성률**"]):
         col.markdown(label)
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
@@ -549,14 +550,15 @@ def page_sa_salesmen():
             pct_str = f"<span style='color:{pct_color};font-weight:700;'>{pct:.1f}%</span>"
         else:
             pct_str = "<span style='color:#555;'>—</span>"
-        row = st.columns([0.4, 2.2, 2.5, 1.2, 1.3, 1.3, 1.1])
+        row = st.columns([0.4, 2.0, 2.2, 1.0, 1.0, 1.3, 1.3, 1.1])
         row[0].markdown(str(i))
         row[1].markdown(r["name"])
         row[2].markdown(f"<span style='font-size:0.82rem;color:#888;'>{r.get('npp','')}</span>", unsafe_allow_html=True)
-        row[3].markdown(f"<span style='font-size:0.82rem;'>{r.get('asm','')}</span>", unsafe_allow_html=True)
-        row[4].markdown(fmt(r["total"]) if r["total"] else "—")
-        row[5].markdown(fmt(r["target"]) if r["target"] else "—")
-        row[6].markdown(pct_str, unsafe_allow_html=True)
+        row[3].markdown(f"<span style='font-size:0.82rem;color:#888;'>{r.get('province','')}</span>", unsafe_allow_html=True)
+        row[4].markdown(f"<span style='font-size:0.82rem;'>{r.get('asm','')}</span>", unsafe_allow_html=True)
+        row[5].markdown(fmt(r["total"]) if r["total"] else "—")
+        row[6].markdown(fmt(r["target"]) if r["target"] else "—")
+        row[7].markdown(pct_str, unsafe_allow_html=True)
 
 
 def page_sa_province():
