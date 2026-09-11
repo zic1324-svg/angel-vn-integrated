@@ -539,7 +539,7 @@ def page_sa_salesmen():
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
     hdr = st.columns([0.4, 2.0, 2.2, 1.0, 1.0, 1.3, 1.3, 1.1])
-    for col, label in zip(hdr, ["**#**","**세일즈맨**","**NPP**","**성**","**ASM**","**실적**","**타겟**","**달성률**"]):
+    for col, label in zip(hdr, ["**#**","**세일즈맨**","**NPP**","**지역**","**ASM**","**실적**","**타겟**","**달성률**"]):
         col.markdown(label)
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
