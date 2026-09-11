@@ -145,7 +145,7 @@ NPP_ORDER = {
     'TU':    ['KPP.HAN.0009','KPP.PTH.0008','KPP.BNI.0005','KPP.BGI.0004',
               'KPP.TQU.00002','KPP.VPH.0002','KPP.TNG.0003','KPP.HGI.0001',
               'KPP.PTH.00009','KPP.LCA.00002'],
-    'VINH':  ['KPP.HAN.0010','KPP.QNI.0004','KPP.HPH.00003','KPP.HPH.00002',
+    'VINH':  ['KPP.HAN.0010','KPP.QNI.0004','KPP.HPH.0001','KPP.HPH.00003','KPP.HPH.00002',
               'KPP.HYE.0005'],
     'TU,HOI':['KPP.NAN.0006','KPP.NDI.0006','KPP.NBI.00003','KPP.QBI.0002',
               'KPP.HTI.00007','KPP.THO.0005','KPP.THO.00006','KPP.TBI.0004'],
@@ -200,12 +200,6 @@ records, inv_records, load_error = load_data()
 if load_error:
     st.error(f"데이터 로드 실패: {load_error}")
 
-# KPP 코드 alias 정규화 (구코드 → 신코드로 통합 표시)
-for _ms in list(records.keys()):
-    for _old, _new in KPP_ALIAS.items():
-        if _old in records[_ms] and _new not in records[_ms]:
-            records[_ms][_new] = records[_ms].pop(_old)
-            records[_ms][_new]["_code_alias"] = _old
 
 # ── 쿼리 파라미터로 상태 관리 ─────────────────────────────────────────
 def get_state():
