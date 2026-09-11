@@ -497,6 +497,9 @@ def page_sa_salesmen():
             asm_code = kpp_data.get("asm", "")
             for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
                 key = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
+                # 이름에 붙은 SKU 태그 제거 (예: "...Đồng Xoài) KHĂN ƯỚT" → "...Đồng Xoài)")
+                if ")" in key:
+                    key = key[:key.rfind(")")+1]
                 if key not in sa_map:
                     sa_map[key] = {"name": key.split("(NPP")[0].strip(), "total": 0, "target": 0, "months": 0}
                 sa_map[key]["npp"]      = npp_name
