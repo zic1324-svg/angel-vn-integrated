@@ -12,7 +12,8 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-  .block-container { padding-top: 3rem !important; padding-bottom: 1rem; }
+  .block-container { padding-top: 3rem !important; padding-bottom: 5rem; }
+  /* Streamlit Cloud "Manage app" 버튼에 가리지 않도록 하단 여백 확보 */
 
   a { text-decoration: none !important; color: inherit !important; }
 
