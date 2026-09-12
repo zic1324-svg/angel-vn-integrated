@@ -574,7 +574,8 @@ def page_sa_salesmen():
         eid_str = f" <span style='font-size:0.78rem;color:#666;'>({eid})</span>" if eid else ""
         row[1].markdown(f"{r['name']}{eid_str}", unsafe_allow_html=True)
         row[2].markdown(f"<span style='font-size:0.82rem;color:#888;'>{r.get('npp','')}</span>", unsafe_allow_html=True)
-        prov_disp = r.get('province','').replace('Tỉnh ','').replace('Thành phố ','')
+        prov_raw  = r.get('province', '')
+        prov_disp = REGION_MAP.get(prov_raw, prov_raw).replace('Tỉnh ','').replace('Thành phố ','')
         row[3].markdown(f"<span style='font-size:0.82rem;color:#888;'>{prov_disp}</span>", unsafe_allow_html=True)
         row[4].markdown(f"<span style='font-size:0.82rem;'>{r.get('asm','')}</span>", unsafe_allow_html=True)
         row[5].markdown(fmt(r["total"]) if r["total"] else "—")
