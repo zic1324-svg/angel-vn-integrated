@@ -515,12 +515,14 @@ def page_sa_salesmen():
                     key = key[:key.rfind(")")+1]
                 if key not in sa_map:
                     sa_map[key] = {"name": key.split("(NPP")[0].strip(), "total": 0, "target": 0, "months": 0}
-                sa_map[key]["npp"]      = npp_name
-                sa_map[key]["province"] = kpp_data.get("province", "")
-                sa_map[key]["asm"]      = ASM_FULL.get(asm_code, asm_code)
-                sa_map[key]["total"]  += sa_data.get("total", 0)
-                sa_map[key]["target"] += sa_data.get("_target", 0)
-                sa_map[key]["months"] += 1
+                sa_map[key]["npp"]         = npp_name
+                sa_map[key]["province"]    = kpp_data.get("province", "")
+                sa_map[key]["asm"]         = ASM_FULL.get(asm_code, asm_code)
+                sa_map[key]["total"]      += sa_data.get("total", 0)
+                sa_map[key]["target"]     += sa_data.get("_target", 0)
+                sa_map[key]["months"]     += 1
+                if sa_data.get("employee_id") and not sa_map[key].get("employee_id"):
+                    sa_map[key]["employee_id"] = sa_data["employee_id"]
 
     rows = []
     for r in sa_map.values():
@@ -568,7 +570,9 @@ def page_sa_salesmen():
             pct_str = "<span style='color:#555;'>—</span>"
         row = st.columns([0.4, 2.0, 2.2, 1.0, 1.0, 1.3, 1.3, 1.1])
         row[0].markdown(str(i))
-        row[1].markdown(r["name"])
+        eid = r.get("employee_id", "")
+        eid_str = f" <span style='font-size:0.78rem;color:#666;'>({eid})</span>" if eid else ""
+        row[1].markdown(f"{r['name']}{eid_str}", unsafe_allow_html=True)
         row[2].markdown(f"<span style='font-size:0.82rem;color:#888;'>{r.get('npp','')}</span>", unsafe_allow_html=True)
         prov_disp = r.get('province','').replace('Tỉnh ','').replace('Thành phố ','')
         row[3].markdown(f"<span style='font-size:0.82rem;color:#888;'>{prov_disp}</span>", unsafe_allow_html=True)
