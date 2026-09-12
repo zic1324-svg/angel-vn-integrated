@@ -488,7 +488,7 @@ def page_sa_salesmen():
     QUARTERS = {
         "Q1 (1~3월)": [1, 2, 3],
         "Q2 (4~6월)": [4, 5, 6],
-        "Q3 (7~9월)": [7, 8, 9],
+        "Q3 (7~8월)": [7, 8],
     }
     cur_month = state["month"]
     default_q = "Q1 (1~3월)"
@@ -586,7 +586,7 @@ def page_sa_province():
     back_button("세일즈 분석으로", "sa_analysis")
     st.markdown("## 🗺️ 지역 분석")
 
-    QUARTERS = {"Q1 (1~3월)": [1,2,3], "Q2 (4~6월)": [4,5,6], "Q3 (7~9월)": [7,8,9]}
+    QUARTERS = {"Q1 (1~3월)": [1,2,3], "Q2 (4~6월)": [4,5,6], "Q3 (7~8월)": [7,8]}
     cur_month = state["month"]
     default_q = next((q for q, ms in QUARTERS.items() if cur_month in ms), "Q1 (1~3월)")
     q_keys = list(QUARTERS.keys())
