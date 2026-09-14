@@ -697,7 +697,7 @@ def page_sa_salesmen():
 
         if is_open:
             st.plotly_chart(
-                _sa_monthly_chart(r["key"], max_month),
+                _sa_monthly_chart(r["key"], month),
                 use_container_width=True,
                 config={"displayModeBar": False},
             )
