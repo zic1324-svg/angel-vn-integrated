@@ -523,23 +523,29 @@ def _sa_monthly_chart(sa_key, max_month):
         actuals.append(actual / 1_000_000)
         targets.append(target / 1_000_000)
 
-    bar_colors = []
+    dot_colors = []
     for a, t in zip(actuals, targets):
         if t == 0:
-            bar_colors.append("#4A9EFF")
+            dot_colors.append("#4A9EFF")
         elif a >= t:
-            bar_colors.append("#10b981")
+            dot_colors.append("#10b981")
         else:
-            bar_colors.append("#ef4444")
+            dot_colors.append("#ef4444")
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(
+    fig.add_trace(go.Scatter(
         x=months, y=actuals,
-        marker_color=bar_colors,
+        mode="lines+markers",
         name="실적",
+        line=dict(color="rgba(150,150,145,0.25)", width=1.5),
+        marker=dict(
+            size=11,
+            color=dot_colors,
+            line=dict(color="rgba(20,20,18,0.9)", width=2),
+        ),
         text=[f"{a:.1f}" for a in actuals],
-        textposition="outside",
-        textfont=dict(size=11),
+        textposition="top center",
+        textfont=dict(size=10, color="rgba(160,160,155,0.85)"),
     ))
 
     tgt_x = [months[i] for i, t in enumerate(targets) if t > 0]
@@ -547,22 +553,20 @@ def _sa_monthly_chart(sa_key, max_month):
     if tgt_x:
         fig.add_trace(go.Scatter(
             x=tgt_x, y=tgt_y,
-            mode="lines+markers",
+            mode="lines",
             name="타겟",
-            line=dict(color="#f59e0b", dash="dash", width=2),
-            marker=dict(size=7, symbol="diamond"),
+            line=dict(color="#f59e0b", dash="dash", width=1.5),
         ))
 
     fig.update_layout(
         height=260,
-        margin=dict(l=0, r=0, t=24, b=0),
+        margin=dict(l=0, r=0, t=28, b=0),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        yaxis=dict(gridcolor="rgba(128,128,128,0.15)", ticksuffix="Tr", rangemode="tozero"),
+        yaxis=dict(gridcolor="rgba(128,128,128,0.12)", ticksuffix="Tr", rangemode="tozero"),
         xaxis=dict(gridcolor="rgba(0,0,0,0)"),
         font=dict(color="#aaa", size=12),
-        bargap=0.35,
     )
     return fig
 
@@ -597,10 +601,29 @@ def page_sa_salesmen():
             if sa_data.get("employee_id") and not sa_map[key].get("employee_id"):
                 sa_map[key]["employee_id"] = sa_data["employee_id"]
 
+    # 이전 달 달성률 계산
+    prev_pct_map = {}
+    if month > 1:
+        for kpp_data in records.get(str(month - 1), {}).values():
+            for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
+                k = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
+                if ")" in k:
+                    k = k[:k.rfind(")")+1]
+                pt = sa_data.get("total", 0)
+                ptg = sa_data.get("_target", 0)
+                if k not in prev_pct_map:
+                    prev_pct_map[k] = {"total": 0, "target": 0}
+                prev_pct_map[k]["total"]  += pt
+                prev_pct_map[k]["target"] += ptg
+        for k, v in prev_pct_map.items():
+            t2, tg2 = v["total"], v["target"]
+            prev_pct_map[k] = t2 / tg2 * 100 if tg2 > 0 else None
+
     rows = []
     for r in sa_map.values():
         t, tg = r["total"], r["target"]
         r["pct"] = t / tg * 100 if tg > 0 else None
+        r["prev_pct"] = prev_pct_map.get(r["key"])
         rows.append(r)
 
     sort_key = st.session_state.get("sa_sort", "pct")
@@ -635,9 +658,11 @@ def page_sa_salesmen():
 
     for i, r in enumerate(all_rows, 1):
         pct = r["pct"]
+        prev_pct = r.get("prev_pct")
         if pct is not None:
             pct_color = "#10b981" if pct >= 100 else ("#f59e0b" if pct >= 70 else "#ef4444")
-            pct_str = f"<span style='color:{pct_color};font-weight:700;'>{pct:.1f}%</span>"
+            prev_str = f" <span style='font-size:0.75rem;color:#555;'>({prev_pct:.0f}%)</span>" if prev_pct is not None else ""
+            pct_str = f"<span style='color:{pct_color};font-weight:700;'>{pct:.1f}%</span>{prev_str}"
         else:
             pct_str = "<span style='color:#555;'>—</span>"
 
