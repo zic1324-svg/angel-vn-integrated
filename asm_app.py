@@ -6,7 +6,7 @@ from pathlib import Path
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="엔젤베트남 ASM 관리",
+    page_title="Angel Vietnam - ASM",
     page_icon="🔐",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -224,7 +224,7 @@ def _hash_pw(pw): return hashlib.sha256(pw.encode()).hexdigest()
 
 records, inv_records, load_error = load_data()
 if load_error:
-    st.error(f"데이터 로드 실패: {load_error}")
+    st.error(f"Lỗi tải dữ liệu: {load_error}")
 
 # ── 쿼리 파라미터로 상태 관리 ─────────────────────────────────────────
 def get_state():
@@ -275,7 +275,7 @@ def month_selector(current_month):
     available = sorted([int(k) for k in records.keys() if k.isdigit()])
     if not available: return None
     idx = available.index(current_month) if current_month in available else len(available)-1
-    m = st.selectbox("월", available, index=idx, format_func=lambda x: f"{x}월", key="month_sel")
+    m = st.selectbox("Tháng", available, index=idx, format_func=lambda x: f"Tháng {x}", key="month_sel")
     if m != current_month:
         new_params = dict(st.query_params)
         new_params["m"] = str(m)
@@ -342,11 +342,11 @@ def _asm_header():
             f"<span style='font-size:0.85rem;color:#888;'>👤 {full_name} ({login_id})</span>",
             unsafe_allow_html=True)
     with c2:
-        if st.button("비밀번호 변경", key="hdr_chpw", use_container_width=True):
+        if st.button("Đổi mật khẩu", key="hdr_chpw", use_container_width=True):
             st.session_state["asm_change_pw"] = True
             st.rerun()
     with c3:
-        if st.button("로그아웃", key="hdr_logout", use_container_width=True):
+        if st.button("Đăng xuất", key="hdr_logout", use_container_width=True):
             for k in ["asm_login_id", "asm_change_pw"]:
                 st.session_state.pop(k, None)
             st.rerun()
@@ -354,66 +354,66 @@ def _asm_header():
                 unsafe_allow_html=True)
 
 def page_login():
-    st.markdown("## 🔐 ASM 로그인")
+    st.markdown("## 🔐 Đăng nhập ASM")
     st.markdown("---")
     _, col, _ = st.columns([1, 2, 1])
     with col:
-        login_id = st.text_input("계정 ID", key="login_id_input").strip().upper()
-        password = st.text_input("비밀번호", type="password", key="login_pw_input")
-        if st.button("로그인", use_container_width=True, key="login_btn"):
+        login_id = st.text_input("Tài khoản", key="login_id_input").strip().upper()
+        password = st.text_input("Mật khẩu", type="password", key="login_pw_input")
+        if st.button("Đăng nhập", use_container_width=True, key="login_btn"):
             if login_id not in LOGIN_TO_ASM:
-                st.error("존재하지 않는 계정입니다.")
+                st.error("Tài khoản không tồn tại.")
             else:
                 pws = load_asm_passwords()
                 if pws.get(login_id) == _hash_pw(password):
                     st.session_state["asm_login_id"] = login_id
                     st.rerun()
                 else:
-                    st.error("비밀번호가 틀렸습니다.")
+                    st.error("Mật khẩu không đúng.")
 
 def page_change_password():
     login_id = _asm_login_id()
-    st.markdown("#### 🔑 비밀번호 변경")
+    st.markdown("#### 🔑 Đổi mật khẩu")
     st.markdown("---")
     _, col, _ = st.columns([1, 2, 1])
     with col:
-        cur_pw  = st.text_input("현재 비밀번호", type="password", key="cur_pw")
-        new_pw  = st.text_input("새 비밀번호 (6자 이상)", type="password", key="new_pw")
-        new_pw2 = st.text_input("새 비밀번호 확인", type="password", key="new_pw2")
+        cur_pw  = st.text_input("Mật khẩu hiện tại", type="password", key="cur_pw")
+        new_pw  = st.text_input("Mật khẩu mới (tối thiểu 6 ký tự)", type="password", key="new_pw")
+        new_pw2 = st.text_input("Xác nhận mật khẩu mới", type="password", key="new_pw2")
         b1, b2  = st.columns(2)
         with b1:
-            if st.button("취소", use_container_width=True, key="cancel_pw_btn"):
+            if st.button("Hủy", use_container_width=True, key="cancel_pw_btn"):
                 st.session_state.pop("asm_change_pw", None)
                 st.rerun()
         with b2:
-            if st.button("변경", use_container_width=True, key="change_pw_btn"):
+            if st.button("Xác nhận", use_container_width=True, key="change_pw_btn"):
                 pws = load_asm_passwords()
                 if pws.get(login_id) != _hash_pw(cur_pw):
-                    st.error("현재 비밀번호가 틀렸습니다.")
+                    st.error("Mật khẩu hiện tại không đúng.")
                 elif new_pw != new_pw2:
-                    st.error("새 비밀번호가 일치하지 않습니다.")
+                    st.error("Mật khẩu mới không khớp.")
                 elif len(new_pw) < 6:
-                    st.error("비밀번호는 6자 이상이어야 합니다.")
+                    st.error("Mật khẩu phải có ít nhất 6 ký tự.")
                 else:
                     try:
                         save_asm_password(login_id, _hash_pw(new_pw))
-                        st.success("비밀번호가 변경되었습니다.")
+                        st.success("Đổi mật khẩu thành công.")
                         st.session_state.pop("asm_change_pw", None)
                         st.rerun()
                     except Exception as e:
-                        st.error(f"저장 실패: {e}")
+                        st.error(f"Lưu thất bại: {e}")
 
 # ── 페이지 함수 ──────────────────────────────────────────────────────
 def page_home():
-    st.markdown("### 📊 엔젤베트남 NPP 통합관리")
+    st.markdown("### 📊 Angel Vietnam - Quản lý NPP")
     st.markdown("---")
     month = state["month"]
     col, _ = st.columns([1, 1])
     with col:
         st.markdown(f"""<a href="{card_href('npp_list', m=month)}" target="_self" class="home-card">
           <div class="home-icon">🗂️</div>
-          <div class="home-title">NPP 통합관리</div>
-          <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
+          <div class="home-title">Quản lý NPP</div>
+          <div class="home-desc">Doanh số theo SKU và xu hướng hàng tháng</div>
         </a>""", unsafe_allow_html=True)
 
 
@@ -421,7 +421,7 @@ def page_npp_list():
     """로그인 ASM의 NPP 목록"""
     asm_code = _asm_code()
     month    = state["month"]
-    back_button("홈으로", "home", month=month)
+    back_button("Trang chủ", "home", month=month)
     full_name = ASM_FULL.get(asm_code, asm_code)
 
     col_m, _ = st.columns([2, 6])
@@ -435,7 +435,7 @@ def page_npp_list():
     inv_only   = {k: v for k, v in inv_month.items()
                   if v.get("_asm") == asm_code and k not in filtered}
 
-    st.markdown(f"### {full_name} 담당 NPP")
+    st.markdown(f"### NPP phụ trách của {full_name}")
     st.markdown("---")
 
     all_codes = sort_npps(list(filtered.keys()) + list(inv_only.keys()), asm_code)
@@ -460,8 +460,8 @@ def page_npp_list():
             inv_str = fmt_inv(npp_inv_amt) if npp_inv_amt > 0 else "-"
             months_str, months_cls, optimal_str = inv_status(code, month, npp_inv_amt)
             wrap_cls = "npp-card-wrap" + (" npp-no-so" if not has_so else "")
-            so_display = fmt_inv(saleout_total) if has_so else "없음"
-            so_badge   = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
+            so_display = fmt_inv(saleout_total) if has_so else "Không có"
+            so_badge   = "" if has_so else '<div class="npp-no-so-badge">Không có sale out</div>'
             province   = get_region(code) or d.get("_province") or d.get("province", "")
             with col:
                 st.markdown(
@@ -477,7 +477,7 @@ def page_npp_list():
                     f'<div class="npp-half-amt">{so_display}</div>'
                     f'</a>'
                     f'<a href="{href_inv}" target="_self" class="npp-half">'
-                    f'<div class="npp-half-lbl">재고금액</div>'
+                    f'<div class="npp-half-lbl">Tồn kho</div>'
                     f'<div class="npp-half-amt npp-half-inv">{inv_str}{"<span style=\'font-size:0.78rem;color:#888;font-weight:400;\'> (" + optimal_str + ")</span>" if optimal_str else ""}</div>'
                     f'<div class="{months_cls}">{months_str}</div>'
                     f'</a>'
@@ -490,7 +490,7 @@ def page_npp_list():
 def page_npp_detail():
     asm_code = state["selected_asm"] or _asm_code()
     month    = state["month"]
-    back_button("NPP 목록으로", "npp_list", asm=asm_code, month=month)
+    back_button("Danh sách NPP", "npp_list", asm=asm_code, month=month)
 
     code = state["selected_npp"]
     col_m, _ = st.columns([2, 6])
@@ -503,7 +503,7 @@ def page_npp_detail():
     inv_meta   = inv_records.get(str(month), {}).get(code, {})
 
     if not npp and not inv_meta:
-        st.warning(f"{month}월 데이터가 없습니다."); return
+        st.warning(f"Không có dữ liệu tháng {month}."); return
 
     if npp:
         asm      = npp.get("asm", "")
@@ -518,14 +518,14 @@ def page_npp_detail():
     st.markdown(f"### {name_disp}  <small style='color:#888;font-size:0.75rem;font-weight:400;'>{province}</small>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     c1.metric("ASM", asm_name)
-    c2.metric(f"{month}월 합계", fmt(npp["total"]) if npp else "세일아웃 없음")
+    c2.metric(f"Tổng tháng {month}", fmt(npp["total"]) if npp else "Không có sale out")
     current_staff = len(npp.get("salesmen", {})) if npp else 0
     planned_staff = inv_meta.get("_planned_staff")
     staff_disp = f"{current_staff}/{planned_staff}" if planned_staff else str(current_staff)
-    c3.metric("세일즈맨 수", staff_disp)
+    c3.metric("Số nhân viên", staff_disp)
 
     if not npp:
-        st.info("이 NPP는 해당 월에 세일아웃 데이터가 없습니다.")
+        st.info("NPP này không có dữ liệu sale out trong tháng này.")
         return
 
     st.markdown("---")
@@ -539,16 +539,16 @@ def page_npp_detail():
         cols[i].metric(sku, fmt(sku_totals[sku]))
 
     st.markdown("---")
-    st.markdown("### 세일즈맨별 실적")
+    st.markdown("### Doanh số theo nhân viên")
     salesmen  = npp.get("salesmen", {})
     sorted_sa = sorted(salesmen.items(), key=lambda x: -x[1].get("total", 0))
 
     col_widths = [2.5] + [1.0] * month + [1.5]
     header = st.columns(col_widths)
-    header[0].markdown("**세일즈맨**")
+    header[0].markdown("**Nhân viên**")
     for i in range(month):
-        header[i + 1].markdown(f"**{i+1}월**")
-    header[-1].markdown("**추이**")
+        header[i + 1].markdown(f"**T{i+1}**")
+    header[-1].markdown("**Xu hướng**")
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
     SKU_SHORT = {
@@ -591,7 +591,7 @@ def page_npp_stock():
     asm_code = state["selected_asm"] or _asm_code()
     month    = state["month"]
     code     = state["selected_npp"]
-    back_button("NPP 목록으로", "npp_list", asm=asm_code, month=month)
+    back_button("Danh sách NPP", "npp_list", asm=asm_code, month=month)
 
     month_data = records.get(str(month), {})
     npp        = month_data.get(code, {})
@@ -604,16 +604,16 @@ def page_npp_stock():
         unsafe_allow_html=True)
     st.markdown(f"<div class='breadcrumb'>{code}</div>", unsafe_allow_html=True)
     st.markdown("---")
-    st.markdown(f"#### 📦 {month}월 SKU별 재고 현황")
+    st.markdown(f"#### 📦 Tình trạng tồn kho theo SKU - Tháng {month}")
 
     npp_inv = inv_records.get(str(month), {}).get(code, {})
     if not npp_inv:
-        st.warning(f"{month}월 재고 데이터가 없습니다.")
+        st.warning(f"Không có dữ liệu tồn kho tháng {month}.")
         return
 
     hdr = st.columns([2.2, 1.1, 1.4, 1.5])
-    hdr[0].markdown("**SKU**"); hdr[1].markdown("**재고수량**")
-    hdr[2].markdown("**재고금액**"); hdr[3].markdown("**예상사용월수**")
+    hdr[0].markdown("**SKU**"); hdr[1].markdown("**Số lượng**")
+    hdr[2].markdown("**Giá trị tồn kho**"); hdr[3].markdown("**Tháng sử dụng dự kiến**")
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
     total_inv_amt = 0
@@ -654,7 +654,7 @@ def page_npp_stock():
 
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
     tot_col = st.columns([2.2, 1.1, 1.4, 1.5])
-    tot_col[0].markdown("**합계**"); tot_col[2].markdown(f"**{fmt_inv(total_inv_amt)}**")
+    tot_col[0].markdown("**Tổng**"); tot_col[2].markdown(f"**{fmt_inv(total_inv_amt)}**")
 
 
 # ── 라우팅 ───────────────────────────────────────────────────────────
