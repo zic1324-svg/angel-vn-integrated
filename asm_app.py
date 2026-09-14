@@ -468,29 +468,38 @@ def page_npp_list():
             staff_str = (f"{current_staff}/{planned_staff}" if planned_staff
                          else str(current_staff) if current_staff else "")
             staff_html = f'<div class="npp-staff">👤 {staff_str}</div>' if staff_str else ""
-            inv_btn_lbl = inv_str + (f" ({optimal_str})" if optimal_str else "")
+            inv_opt = (f"<span style='font-size:0.78rem;color:#888;font-weight:400;'> ({optimal_str})</span>"
+                       if optimal_str else "")
             with col:
-                with st.container(border=True):
-                    st.markdown(
-                        f'<div class="npp-title">{code} · {province}</div>'
-                        f'<div class="npp-name">{name_short}</div>'
-                        f'{staff_html}'
-                        f'{so_badge}',
-                        unsafe_allow_html=True,
-                    )
-                    b1, b2 = st.columns(2)
-                    with b1:
-                        if st.button(f"📊 {so_display}", key=f"so_{code}", use_container_width=True):
-                            nav_to(p="npp_detail", npp=code, asm=asm_code, m=str(month))
-                    with b2:
-                        if st.button(f"📦 {inv_btn_lbl}", key=f"inv_{code}", use_container_width=True):
-                            nav_to(p="npp_stock", npp=code, asm=asm_code, m=str(month))
-                        if months_str:
-                            warn = months_cls == "npp-half-months-warn"
-                            color = "#ff7875" if warn else "#888"
-                            st.markdown(
-                                f"<div style='font-size:0.78rem;color:{color};text-align:center;margin-top:2px;'>{months_str}</div>",
-                                unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="{wrap_cls}" style="cursor:default;">'
+                    f'<div class="npp-card-hdr">'
+                    f'<div class="npp-title">{code} · {province}</div>'
+                    f'<div class="npp-name">{name_short}</div>'
+                    f'{staff_html}'
+                    f'{so_badge}'
+                    f'</div>'
+                    f'<div class="npp-card-body">'
+                    f'<div class="npp-half npp-half-left" style="cursor:default;">'
+                    f'<div class="npp-half-lbl">Sale out</div>'
+                    f'<div class="npp-half-amt">{so_display}</div>'
+                    f'</div>'
+                    f'<div class="npp-half" style="cursor:default;">'
+                    f'<div class="npp-half-lbl">Tồn kho</div>'
+                    f'<div class="npp-half-amt npp-half-inv">{inv_str}{inv_opt}</div>'
+                    f'<div class="{months_cls}">{months_str}</div>'
+                    f'</div>'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+                b1, b2 = st.columns(2)
+                with b1:
+                    if st.button("📊 Doanh số", key=f"so_{code}", use_container_width=True):
+                        nav_to(p="npp_detail", npp=code, asm=asm_code, m=str(month))
+                with b2:
+                    if st.button("📦 Tồn kho", key=f"inv_{code}", use_container_width=True):
+                        nav_to(p="npp_stock", npp=code, asm=asm_code, m=str(month))
 
 
 def page_npp_detail():
