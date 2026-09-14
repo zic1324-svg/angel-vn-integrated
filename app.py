@@ -486,50 +486,33 @@ def page_sa_salesmen():
     back_button("세일즈 분석으로", "sa_analysis")
     st.markdown("## 👤 세일즈맨")
 
-    QUARTERS = {
-        "Q1 (1~3월)": [1, 2, 3],
-        "Q2 (4~6월)": [4, 5, 6],
-        "Q3 (7~8월)": [7, 8],
-    }
-    cur_month = state["month"]
-    default_q = "Q1 (1~3월)"
-    for q, ms in QUARTERS.items():
-        if cur_month in ms:
-            default_q = q
-    q_keys = list(QUARTERS.keys())
-    col_q, _ = st.columns([2, 6])
-    with col_q:
-        selected_q = st.selectbox("분기", q_keys, index=q_keys.index(default_q), key="q_sel")
-    q_months = QUARTERS[selected_q]
+    col_m, _ = st.columns([2, 6])
+    with col_m:
+        month = month_selector(state["month"])
+    if not month:
+        return
     st.markdown("---")
 
     sa_map = {}
-    for m in q_months:
-        m_data = records.get(str(m), {})
-        for kpp_code, kpp_data in m_data.items():
-            npp_name = kpp_data.get("name", kpp_code)
-            asm_code = kpp_data.get("asm", "")
-            for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
-                key = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
-                # 이름에 붙은 SKU 태그 제거 (예: "...Đồng Xoài) KHĂN ƯỚT" → "...Đồng Xoài)")
-                if ")" in key:
-                    key = key[:key.rfind(")")+1]
-                if key not in sa_map:
-                    sa_map[key] = {"name": key.split("(NPP")[0].strip(), "total": 0, "target": 0, "months": 0}
-                sa_map[key]["npp"]         = npp_name
-                sa_map[key]["province"]    = kpp_data.get("province", "")
-                sa_map[key]["asm"]         = ASM_FULL.get(asm_code, asm_code)
-                sa_map[key]["total"]      += sa_data.get("total", 0)
-                sa_map[key]["target"]     += sa_data.get("_target", 0)
-                sa_map[key]["months"]     += 1
-                if sa_data.get("employee_id") and not sa_map[key].get("employee_id"):
-                    sa_map[key]["employee_id"] = sa_data["employee_id"]
+    for kpp_code, kpp_data in records.get(str(month), {}).items():
+        npp_name = kpp_data.get("name", kpp_code)
+        asm_code = kpp_data.get("asm", "")
+        for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
+            key = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
+            if ")" in key:
+                key = key[:key.rfind(")")+1]
+            if key not in sa_map:
+                sa_map[key] = {"name": key.split("(NPP")[0].strip(), "total": 0, "target": 0}
+            sa_map[key]["npp"]      = npp_name
+            sa_map[key]["province"] = kpp_data.get("province", "")
+            sa_map[key]["asm"]      = ASM_FULL.get(asm_code, asm_code)
+            sa_map[key]["total"]   += sa_data.get("total", 0)
+            sa_map[key]["target"]  += sa_data.get("_target", 0)
+            if sa_data.get("employee_id") and not sa_map[key].get("employee_id"):
+                sa_map[key]["employee_id"] = sa_data["employee_id"]
 
     rows = []
     for r in sa_map.values():
-        n = r["months"] if r["months"] > 0 else 1
-        r["total"]  = r["total"]  / n
-        r["target"] = r["target"] / n
         t, tg = r["total"], r["target"]
         r["pct"] = t / tg * 100 if tg > 0 else None
         rows.append(r)
@@ -554,7 +537,7 @@ def page_sa_salesmen():
 
     all_rows = sort_rows(rows, sort_key)
 
-    st.markdown(f"**{selected_q} 전체 세일즈맨 {len(all_rows)}명**")
+    st.markdown(f"**{month}월 전체 세일즈맨 {len(all_rows)}명**")
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
     hdr = st.columns([0.4, 2.0, 2.2, 1.0, 1.0, 1.3, 1.3, 1.1])
