@@ -289,8 +289,8 @@ def set_state(page, **kwargs):
 
 state = get_state()
 
-# ASM 모드 감지: ?mode=asm URL 진입 시 세션에 저장하고 이후도 유지
-if st.query_params.get("mode") == "asm":
+# ASM 모드 감지: ?access=asm URL 진입 시 세션에 저장하고 이후도 유지
+if st.query_params.get("access") == "asm":
     st.session_state["asm_mode"] = True
 ASM_MODE = st.session_state.get("asm_mode", False)
 
@@ -314,7 +314,7 @@ def card_href(page, **kwargs):
     for k, v in kwargs.items():
         params += f"&{k}={v}"
     if ASM_MODE:
-        params += "&mode=asm"
+        params += "&access=asm"
     return f"?{params}"
 
 def back_button(label, page, **kwargs):
@@ -323,10 +323,10 @@ def back_button(label, page, **kwargs):
     if "npp"   in kwargs: params["npp"] = kwargs["npp"]
     if "month" in kwargs: params["m"]   = str(kwargs["month"])
     if "sp"    in kwargs: params["sp"]  = kwargs["sp"]
-    if ASM_MODE: params["mode"] = "asm"
+    if ASM_MODE: params["access"] = "asm"
     query = "&".join(f"{k}={v}" for k, v in params.items())
     month = kwargs.get("month", state["month"])
-    home_suffix = "&mode=asm" if ASM_MODE else ""
+    home_suffix = "&access=asm" if ASM_MODE else ""
     st.markdown(
         f'<a href="?{query}" target="_self" class="nav-back">← {label}</a>'
         f'<a href="?p=home&m={month}{home_suffix}" target="_self" class="nav-home">🏠 홈</a>',
