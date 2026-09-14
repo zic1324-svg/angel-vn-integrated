@@ -263,12 +263,12 @@ def back_button(label, page, **kwargs):
     if "month" in kwargs: params["m"]   = str(kwargs["month"])
     if "sp"    in kwargs: params["sp"]  = kwargs["sp"]
     month = kwargs.get("month", state["month"])
-    c1, c2, _ = st.columns([1, 1, 6])
+    c1, c2, _ = st.columns([1, 1, 6], gap="small")
     with c1:
-        if st.button(f"← {label}", key=f"back__{page}__{state['page']}"):
+        if st.button(f"← {label}", key=f"back__{page}__{state['page']}", use_container_width=True):
             nav_to(**params)
     with c2:
-        if st.button("🏠 Trang chủ", key=f"home__{page}__{state['page']}"):
+        if st.button("🏠 Trang chủ", key=f"home__{page}__{state['page']}", use_container_width=True):
             nav_to(p="home", m=str(month))
 
 def month_selector(current_month):
