@@ -2,6 +2,7 @@
 import streamlit as st
 import json, urllib.request
 from pathlib import Path
+import plotly.graph_objects as go
 
 st.set_page_config(
     page_title="엔젤베트남 영업 통합관리",
@@ -481,6 +482,71 @@ def page_asm_npp_list():
                 )
 
 
+def _sa_monthly_chart(sa_key, max_month):
+    """sa_key에 해당하는 세일즈맨의 1월~max_month 월별 실적+타겟 plotly 차트"""
+    months, actuals, targets = [], [], []
+    for m in range(1, max_month + 1):
+        actual = target = 0
+        for kpp_data in records.get(str(m), {}).values():
+            for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
+                k = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
+                if ")" in k:
+                    k = k[:k.rfind(")")+1]
+                if k == sa_key:
+                    actual = sa_data.get("total", 0)
+                    target = sa_data.get("_target", 0)
+                    break
+            else:
+                continue
+            break
+        months.append(f"{m}월")
+        actuals.append(actual / 1_000_000)
+        targets.append(target / 1_000_000)
+
+    bar_colors = []
+    for a, t in zip(actuals, targets):
+        if t == 0:
+            bar_colors.append("#4A9EFF")
+        elif a >= t:
+            bar_colors.append("#10b981")
+        else:
+            bar_colors.append("#ef4444")
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=months, y=actuals,
+        marker_color=bar_colors,
+        name="실적",
+        text=[f"{a:.1f}" for a in actuals],
+        textposition="outside",
+        textfont=dict(size=11),
+    ))
+
+    tgt_x = [months[i] for i, t in enumerate(targets) if t > 0]
+    tgt_y = [t for t in targets if t > 0]
+    if tgt_x:
+        fig.add_trace(go.Scatter(
+            x=tgt_x, y=tgt_y,
+            mode="lines+markers",
+            name="타겟",
+            line=dict(color="#f59e0b", dash="dash", width=2),
+            marker=dict(size=7, symbol="diamond"),
+        ))
+
+    fig.update_layout(
+        height=260,
+        margin=dict(l=0, r=0, t=24, b=0),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        yaxis=dict(gridcolor="rgba(128,128,128,0.15)", ticksuffix="Tr", rangemode="tozero"),
+        xaxis=dict(gridcolor="rgba(0,0,0,0)"),
+        font=dict(color="#aaa", size=12),
+        bargap=0.35,
+    )
+    return fig
+
+
 def page_sa_salesmen():
     """세일즈 분석 > 세일즈맨 서브페이지"""
     back_button("세일즈 분석으로", "sa_analysis")
@@ -502,7 +568,7 @@ def page_sa_salesmen():
             if ")" in key:
                 key = key[:key.rfind(")")+1]
             if key not in sa_map:
-                sa_map[key] = {"name": key.split("(NPP")[0].strip(), "total": 0, "target": 0}
+                sa_map[key] = {"name": key.split("(NPP")[0].strip(), "key": key, "total": 0, "target": 0}
             sa_map[key]["npp"]      = npp_name
             sa_map[key]["province"] = kpp_data.get("province", "")
             sa_map[key]["asm"]      = ASM_FULL.get(asm_code, asm_code)
@@ -537,6 +603,8 @@ def page_sa_salesmen():
 
     all_rows = sort_rows(rows, sort_key)
 
+    max_month = max((int(m) for m in records if records[m]), default=month)
+
     st.markdown(f"**{month}월 전체 세일즈맨 {len(all_rows)}명**")
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
@@ -565,6 +633,13 @@ def page_sa_salesmen():
         row[5].markdown(fmt(r["total"]) if r["total"] else "—")
         row[6].markdown(fmt(r["target"]) if r["target"] else "—")
         row[7].markdown(pct_str, unsafe_allow_html=True)
+
+        with st.expander(f"📈 {r['name']} — 월별 실적"):
+            st.plotly_chart(
+                _sa_monthly_chart(r["key"], max_month),
+                use_container_width=True,
+                config={"displayModeBar": False},
+            )
 
 
 def page_sa_analysis():
