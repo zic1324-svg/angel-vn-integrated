@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
-import json, urllib.request
+import json, urllib.request, hashlib
 from pathlib import Path
 import plotly.graph_objects as go
 
@@ -116,6 +116,7 @@ TOKEN        = st.secrets["GIST_TOKEN"]
 GIST_ID      = st.secrets["GIST_ID"]
 FILENAME     = "integrated_records.json"
 INV_FILENAME = "inventory_records.json"
+ASM_PW_FILE  = "asm_passwords.json"
 LOCAL_DATA   = Path(__file__).parent / "data" / "integrated_records.json"
 LOCAL_INV    = Path(__file__).parent / "data" / "inventory_records.json"
 
@@ -161,6 +162,49 @@ KPP_ALIAS = {
 
 def normalize_kpp(code):
     return KPP_ALIAS.get(code, code)
+
+# ── ASM 계정 매핑 (로그인 ID → ASM 코드) ─────────────────────────────
+LOGIN_TO_ASM = {
+    'NHU':'NHU','HAI':'HAI','VINH':'VINH','LAM':'LAM',
+    'QUOC':'QUOC','TU':'TU','HUNG':'HUNG','VAN':'VAN','TUHOI':'TU,HOI',
+}
+
+def _hash_pw(pw: str) -> str:
+    return hashlib.sha256(pw.encode()).hexdigest()
+
+@st.cache_data(ttl=60)
+def load_asm_passwords():
+    try:
+        headers = {"Authorization": f"token {TOKEN}",
+                   "Accept": "application/vnd.github.v3+json"}
+        req = urllib.request.Request(
+            f"https://api.github.com/gists/{GIST_ID}", headers=headers)
+        g = json.loads(urllib.request.urlopen(req, timeout=10).read())
+        f = g.get("files", {}).get(ASM_PW_FILE, {})
+        if f.get("truncated"):
+            rr = urllib.request.Request(f["raw_url"], headers=headers)
+            return json.loads(urllib.request.urlopen(rr, timeout=15).read())
+        c = f.get("content", "")
+        return json.loads(c) if c else {}
+    except Exception:
+        return {}
+
+def save_asm_password(login_id: str, new_hash: str):
+    pws = dict(load_asm_passwords())
+    pws[login_id] = new_hash
+    headers = {
+        "Authorization": f"token {TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+    }
+    payload = json.dumps({
+        "files": {ASM_PW_FILE: {"content": json.dumps(pws, ensure_ascii=False)}}
+    }).encode()
+    req = urllib.request.Request(
+        f"https://api.github.com/gists/{GIST_ID}",
+        data=payload, headers=headers, method="PATCH")
+    urllib.request.urlopen(req, timeout=10)
+    load_asm_passwords.clear()
 
 # ASM별 NPP 고정 표시 순서 (2026년 7월 재고파일 컬럼 순서 기준 — 변경 금지)
 NPP_ORDER = {
@@ -245,6 +289,11 @@ def set_state(page, **kwargs):
 
 state = get_state()
 
+# ASM 모드 감지: ?mode=asm URL 진입 시 세션에 저장하고 이후도 유지
+if st.query_params.get("mode") == "asm":
+    st.session_state["asm_mode"] = True
+ASM_MODE = st.session_state.get("asm_mode", False)
+
 # ── 유틸 ────────────────────────────────────────────────────────────
 def fmt(n):
     return f"{n/1_000_000:.2f}Tr"
@@ -264,6 +313,8 @@ def card_href(page, **kwargs):
     params = f"p={page}"
     for k, v in kwargs.items():
         params += f"&{k}={v}"
+    if ASM_MODE:
+        params += "&mode=asm"
     return f"?{params}"
 
 def back_button(label, page, **kwargs):
@@ -272,11 +323,13 @@ def back_button(label, page, **kwargs):
     if "npp"   in kwargs: params["npp"] = kwargs["npp"]
     if "month" in kwargs: params["m"]   = str(kwargs["month"])
     if "sp"    in kwargs: params["sp"]  = kwargs["sp"]
+    if ASM_MODE: params["mode"] = "asm"
     query = "&".join(f"{k}={v}" for k, v in params.items())
     month = kwargs.get("month", state["month"])
+    home_suffix = "&mode=asm" if ASM_MODE else ""
     st.markdown(
         f'<a href="?{query}" target="_self" class="nav-back">← {label}</a>'
-        f'<a href="?p=home&m={month}" target="_self" class="nav-home">🏠 홈</a>',
+        f'<a href="?p=home&m={month}{home_suffix}" target="_self" class="nav-home">🏠 홈</a>',
         unsafe_allow_html=True,
     )
 
@@ -357,19 +410,29 @@ def page_home():
     st.markdown("### 📊 엔젤베트남 영업 통합관리")
     st.markdown("---")
     month = state["month"]
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown(f"""<a href="{card_href('sales_asm', m=month)}" target="_self" class="home-card">
-          <div class="home-icon">🗂️</div>
-          <div class="home-title">NPP 통합관리</div>
-          <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
-        </a>""", unsafe_allow_html=True)
-    with c2:
-        st.markdown(f"""<a href="{card_href('sa_analysis', m=month)}" target="_self" class="home-card">
-          <div class="home-icon">📊</div>
-          <div class="home-title">세일즈 분석</div>
-          <div class="home-desc">세일즈맨별 매출 달성률 분석</div>
-        </a>""", unsafe_allow_html=True)
+    if ASM_MODE:
+        # 세일즈분석 카드 숨김 — NPP 통합관리만 표시
+        col, _ = st.columns([1, 1])
+        with col:
+            st.markdown(f"""<a href="{card_href('sales_asm', m=month)}" target="_self" class="home-card">
+              <div class="home-icon">🗂️</div>
+              <div class="home-title">NPP 통합관리</div>
+              <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
+            </a>""", unsafe_allow_html=True)
+    else:
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(f"""<a href="{card_href('sales_asm', m=month)}" target="_self" class="home-card">
+              <div class="home-icon">🗂️</div>
+              <div class="home-title">NPP 통합관리</div>
+              <div class="home-desc">세일즈맨 SKU별 실적 및 월별 추이</div>
+            </a>""", unsafe_allow_html=True)
+        with c2:
+            st.markdown(f"""<a href="{card_href('sa_analysis', m=month)}" target="_self" class="home-card">
+              <div class="home-icon">📊</div>
+              <div class="home-title">세일즈 분석</div>
+              <div class="home-desc">세일즈맨별 매출 달성률 분석</div>
+            </a>""", unsafe_allow_html=True)
 
 
 def page_npp_inventory():
@@ -400,6 +463,10 @@ def _asm_grid(page_target, btn_label, month):
     ASM_DISPLAY_ORDER = ['TU','VINH','TU,HOI','LAM','HAI','QUOC','HUNG','NHU','VAN']
     sorted_asms = sorted(asm_totals.items(),
                          key=lambda x: ASM_DISPLAY_ORDER.index(x[0]) if x[0] in ASM_DISPLAY_ORDER else 99)
+    # ASM 모드: 로그인 ASM 카드만 표시
+    if ASM_MODE and st.session_state.get("asm_login_id"):
+        asm_filter = LOGIN_TO_ASM.get(st.session_state["asm_login_id"])
+        sorted_asms = [(k, v) for k, v in sorted_asms if k == asm_filter]
     COLS = 4
     rows = [sorted_asms[i:i+COLS] for i in range(0, len(sorted_asms), COLS)]
     for ri, row in enumerate(rows):
@@ -1097,6 +1164,83 @@ def page_npp_stock():
     st.markdown("".join(svg_lines), unsafe_allow_html=True)
 
 
+# ── ASM 로그인 / 비밀번호 변경 / 헤더 ────────────────────────────────
+
+def _asm_header():
+    """ASM 모드 전용 상단 헤더 (로그인 정보 + 버튼)"""
+    login_id = st.session_state.get("asm_login_id", "")
+    asm_code  = LOGIN_TO_ASM.get(login_id, "")
+    full_name = ASM_FULL.get(asm_code, login_id)
+    c1, c2, c3 = st.columns([5, 1, 1])
+    with c1:
+        st.markdown(
+            f"<span style='font-size:0.85rem;color:#888;'>👤 {full_name} ({login_id})</span>",
+            unsafe_allow_html=True)
+    with c2:
+        if st.button("비밀번호 변경", key="hdr_chpw", use_container_width=True):
+            st.session_state["asm_change_pw"] = True
+            st.rerun()
+    with c3:
+        if st.button("로그아웃", key="hdr_logout", use_container_width=True):
+            for k in ["asm_mode", "asm_login_id", "asm_change_pw"]:
+                st.session_state.pop(k, None)
+            st.query_params.clear()
+            st.rerun()
+
+
+def page_asm_login():
+    st.markdown("### 🔐 ASM 로그인")
+    st.markdown("---")
+    _, col, _ = st.columns([1, 2, 1])
+    with col:
+        login_id = st.text_input("계정 ID", key="login_id_input").strip().upper()
+        password = st.text_input("비밀번호", type="password", key="login_pw_input")
+        if st.button("로그인", use_container_width=True, key="login_btn"):
+            if login_id not in LOGIN_TO_ASM:
+                st.error("존재하지 않는 계정입니다.")
+            else:
+                pws = load_asm_passwords()
+                if pws.get(login_id) == _hash_pw(password):
+                    st.session_state["asm_login_id"] = login_id
+                    st.session_state["asm_mode"] = True
+                    st.rerun()
+                else:
+                    st.error("비밀번호가 틀렸습니다.")
+
+
+def page_asm_change_password():
+    login_id = st.session_state.get("asm_login_id", "")
+    st.markdown("#### 🔑 비밀번호 변경")
+    st.markdown("---")
+    _, col, _ = st.columns([1, 2, 1])
+    with col:
+        cur_pw  = st.text_input("현재 비밀번호", type="password", key="cur_pw")
+        new_pw  = st.text_input("새 비밀번호 (6자 이상)", type="password", key="new_pw")
+        new_pw2 = st.text_input("새 비밀번호 확인", type="password", key="new_pw2")
+        b1, b2  = st.columns(2)
+        with b1:
+            if st.button("취소", use_container_width=True, key="cancel_pw_btn"):
+                st.session_state.pop("asm_change_pw", None)
+                st.rerun()
+        with b2:
+            if st.button("변경", use_container_width=True, key="change_pw_btn"):
+                pws = load_asm_passwords()
+                if pws.get(login_id) != _hash_pw(cur_pw):
+                    st.error("현재 비밀번호가 틀렸습니다.")
+                elif new_pw != new_pw2:
+                    st.error("새 비밀번호가 일치하지 않습니다.")
+                elif len(new_pw) < 6:
+                    st.error("비밀번호는 6자 이상이어야 합니다.")
+                else:
+                    try:
+                        save_asm_password(login_id, _hash_pw(new_pw))
+                        st.success("비밀번호가 변경되었습니다.")
+                        st.session_state.pop("asm_change_pw", None)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"저장 실패: {e}")
+
+
 # ── 라우팅 ───────────────────────────────────────────────────────────
 PAGE_MAP = {
     "home":           page_home,
@@ -1109,4 +1253,16 @@ PAGE_MAP = {
     "sales_npp":      page_sales_npp,
     "npp_stock":      page_npp_stock,
 }
-PAGE_MAP.get(state["page"], page_home)()
+if ASM_MODE:
+    if not st.session_state.get("asm_login_id"):
+        page_asm_login()
+    elif st.session_state.get("asm_change_pw"):
+        _asm_header()
+        page_asm_change_password()
+    else:
+        _asm_header()
+        st.markdown("<hr style='margin:4px 0 16px;border-color:rgba(128,128,128,0.15);'>",
+                    unsafe_allow_html=True)
+        PAGE_MAP.get(state["page"], page_home)()
+else:
+    PAGE_MAP.get(state["page"], page_home)()
