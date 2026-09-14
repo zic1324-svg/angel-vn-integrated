@@ -71,6 +71,26 @@ st.markdown("""
   hr.divider { border: none; border-top: 1px solid rgba(128,128,128,0.2); margin: 8px 0; }
   .breadcrumb { font-size: 0.82rem; color: #888; margin-bottom: 4px; }
 
+  /* 세일즈맨 이름 토글 버튼 — 텍스트처럼 보이도록 */
+  div[data-testid="stColumns"] div[data-testid="stColumn"]:nth-child(2) button {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    color: inherit !important;
+    font-size: 0.9rem !important;
+    text-align: left !important;
+    text-decoration: underline dotted rgba(128,128,128,0.5) !important;
+    cursor: pointer !important;
+    white-space: normal !important;
+    line-height: 1.4 !important;
+    box-shadow: none !important;
+  }
+  div[data-testid="stColumns"] div[data-testid="stColumn"]:nth-child(2) button:hover {
+    color: #4A9EFF !important;
+    text-decoration: underline !important;
+    background: transparent !important;
+  }
+
   .npp-no-so { border-style: dashed !important; opacity: 0.82; }
   .npp-no-so-badge { font-size: 0.72rem; color: #fa8c16; margin-top: 2px; font-weight: 600; }
 
@@ -620,11 +640,17 @@ def page_sa_salesmen():
             pct_str = f"<span style='color:{pct_color};font-weight:700;'>{pct:.1f}%</span>"
         else:
             pct_str = "<span style='color:#555;'>—</span>"
+
+        chart_key = f"sa_chart_{r['key']}"
+        is_open = st.session_state.get(chart_key, False)
+
         row = st.columns([0.4, 2.0, 2.2, 1.0, 1.0, 1.3, 1.3, 1.1])
         row[0].markdown(str(i))
         eid = r.get("employee_id", "")
-        eid_str = f" <span style='font-size:0.78rem;color:#666;'>({eid})</span>" if eid else ""
-        row[1].markdown(f"{r['name']}{eid_str}", unsafe_allow_html=True)
+        btn_label = f"{'▼' if is_open else '▶'} {r['name']}" + (f" ({eid})" if eid else "")
+        if row[1].button(btn_label, key=f"sa_name_btn_{i}", use_container_width=True):
+            st.session_state[chart_key] = not is_open
+            st.rerun()
         row[2].markdown(f"<span style='font-size:0.82rem;color:#888;'>{r.get('npp','')}</span>", unsafe_allow_html=True)
         prov_raw  = r.get('province', '')
         prov_disp = REGION_MAP.get(prov_raw, prov_raw).replace('Tỉnh ','').replace('Thành phố ','')
@@ -634,12 +660,13 @@ def page_sa_salesmen():
         row[6].markdown(fmt(r["target"]) if r["target"] else "—")
         row[7].markdown(pct_str, unsafe_allow_html=True)
 
-        with st.expander(f"📈 {r['name']} — 월별 실적"):
+        if is_open:
             st.plotly_chart(
                 _sa_monthly_chart(r["key"], max_month),
                 use_container_width=True,
                 config={"displayModeBar": False},
             )
+            st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
 
 def page_sa_analysis():
