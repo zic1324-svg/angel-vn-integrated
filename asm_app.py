@@ -683,7 +683,7 @@ def page_npp_stock():
         inv_series.append(inv_amt_m)
         avg_m = quarter_avg_sale(code, m)
         opt_series.append(avg_m * 6 if avg_m > 0 else None)
-        labels.append(f"{m}월")
+        labels.append(f"T{m}")
 
     n = len(inv_series)
     W, H = 820, 220
