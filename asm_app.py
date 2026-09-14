@@ -54,6 +54,7 @@ st.markdown("""
   .npp-half-inv   { color: #52c41a; }
   .npp-half-months      { font-size: 0.8rem; color: #888;    margin-top: 3px; }
   .npp-half-months-warn { font-size: 0.8rem; color: #ff7875; margin-top: 3px; font-weight: 600; }
+  .npp-staff { font-size: 0.78rem; color: #aaa; margin-top: 3px; }
 
   .asm-card {
     background: var(--secondary-background-color);
@@ -462,29 +463,34 @@ def page_npp_list():
             so_display = fmt_inv(saleout_total) if has_so else "Không có"
             so_badge   = "" if has_so else '<div class="npp-no-so-badge">Không có sale out</div>'
             province   = get_region(code) or d.get("_province") or d.get("province", "")
-            inv_display = inv_str
-            if optimal_str:
-                inv_display += f" ({optimal_str})"
+            current_staff = len(d.get("salesmen", {})) if has_so else 0
+            planned_staff = inv_month.get(code, {}).get("_planned_staff")
+            staff_str = (f"{current_staff}/{planned_staff}" if planned_staff
+                         else str(current_staff) if current_staff else "")
+            staff_html = f'<div class="npp-staff">👤 {staff_str}</div>' if staff_str else ""
+            inv_btn_lbl = inv_str + (f" ({optimal_str})" if optimal_str else "")
             with col:
-                st.markdown(
-                    f'<div class="{wrap_cls}">'
-                    f'<div class="npp-card-hdr">'
-                    f'<div class="npp-title">{code} · {province}</div>'
-                    f'<div class="npp-name">{name_short}</div>'
-                    f'{so_badge}'
-                    f'</div>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-                b1, b2 = st.columns(2)
-                with b1:
-                    lbl_so = f"📊 {so_display}"
-                    if st.button(lbl_so, key=f"so_{code}", use_container_width=True):
-                        nav_to(p="npp_detail", npp=code, asm=asm_code, m=str(month))
-                with b2:
-                    lbl_inv = f"📦 {inv_display}"
-                    if st.button(lbl_inv, key=f"inv_{code}", use_container_width=True):
-                        nav_to(p="npp_stock", npp=code, asm=asm_code, m=str(month))
+                with st.container(border=True):
+                    st.markdown(
+                        f'<div class="npp-title">{code} · {province}</div>'
+                        f'<div class="npp-name">{name_short}</div>'
+                        f'{staff_html}'
+                        f'{so_badge}',
+                        unsafe_allow_html=True,
+                    )
+                    b1, b2 = st.columns(2)
+                    with b1:
+                        if st.button(f"📊 {so_display}", key=f"so_{code}", use_container_width=True):
+                            nav_to(p="npp_detail", npp=code, asm=asm_code, m=str(month))
+                    with b2:
+                        if st.button(f"📦 {inv_btn_lbl}", key=f"inv_{code}", use_container_width=True):
+                            nav_to(p="npp_stock", npp=code, asm=asm_code, m=str(month))
+                        if months_str:
+                            warn = months_cls == "npp-half-months-warn"
+                            color = "#ff7875" if warn else "#888"
+                            st.markdown(
+                                f"<div style='font-size:0.78rem;color:{color};text-align:center;margin-top:2px;'>{months_str}</div>",
+                                unsafe_allow_html=True)
 
 
 def page_npp_detail():

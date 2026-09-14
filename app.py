@@ -55,6 +55,7 @@ st.markdown("""
   .npp-half-inv   { color: #52c41a; }
   .npp-half-months      { font-size: 0.8rem; color: #888;    margin-top: 3px; }
   .npp-half-months-warn { font-size: 0.8rem; color: #ff7875; margin-top: 3px; font-weight: 600; }
+  .npp-staff { font-size: 0.78rem; color: #aaa; margin-top: 3px; }
 
   .asm-card {
     background: var(--secondary-background-color);
@@ -545,12 +546,18 @@ def page_asm_npp_list():
             so_display = fmt_inv(saleout_total) if has_so else "없음"
             so_badge = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
             province = get_region(code) or d.get("_province") or d.get("province", "")
+            current_staff = len(d.get("salesmen", {})) if has_so else 0
+            planned_staff = inv_month.get(code, {}).get("_planned_staff")
+            staff_str = (f"{current_staff}/{planned_staff}" if planned_staff
+                         else str(current_staff) if current_staff else "")
+            staff_html = f'<div class="npp-staff">👤 {staff_str}</div>' if staff_str else ""
             with col:
                 st.markdown(
                     f'<div class="{wrap_cls}">'
                     f'<div class="npp-card-hdr">'
                     f'<div class="npp-title">{code} · {province}</div>'
                     f'<div class="npp-name">{name_short}</div>'
+                    f'{staff_html}'
                     f'{so_badge}'
                     f'</div>'
                     f'<div class="npp-card-body">'
@@ -853,12 +860,18 @@ def page_sales_npp_list():
             so_display = fmt_inv(saleout_total) if has_so else "없음"
             so_badge = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
             province = get_region(code) or d.get("_province") or d.get("province", "")
+            current_staff = len(d.get("salesmen", {})) if has_so else 0
+            planned_staff = inv_month.get(code, {}).get("_planned_staff")
+            staff_str = (f"{current_staff}/{planned_staff}" if planned_staff
+                         else str(current_staff) if current_staff else "")
+            staff_html = f'<div class="npp-staff">👤 {staff_str}</div>' if staff_str else ""
             with col:
                 st.markdown(
                     f'<div class="{wrap_cls}">'
                     f'<div class="npp-card-hdr">'
                     f'<div class="npp-title">{code} · {province}</div>'
                     f'<div class="npp-name">{name_short}</div>'
+                    f'{staff_html}'
                     f'{so_badge}'
                     f'</div>'
                     f'<div class="npp-card-body">'
