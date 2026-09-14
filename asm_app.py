@@ -673,7 +673,7 @@ def page_npp_stock():
 
     # ── 재고금액 추이 차트 ────────────────────────────────────────────
     st.markdown("---")
-    st.markdown("#### 📈 재고금액 추이")
+    st.markdown("#### 📈 Xu hướng giá trị tồn kho")
 
     inv_series, opt_series, labels = [], [], []
     for m in range(1, month + 1):
@@ -749,9 +749,9 @@ def page_npp_stock():
             svg_lines.append(f'<circle cx="{xp:.1f}" cy="{yp:.1f}" r="3" fill="#10b981"/>')
 
     svg_lines.append(f'<rect x="{PAD_L}" y="{PAD_T}" width="12" height="3" rx="1" fill="#4A9EFF"/>')
-    svg_lines.append(f'<text x="{PAD_L+16}" y="{PAD_T+7}" font-size="11" fill="rgba(128,128,128,0.9)">실재고</text>')
-    svg_lines.append(f'<line x1="{PAD_L+70}" y1="{PAD_T+1.5}" x2="{PAD_L+82}" y2="{PAD_T+1.5}" stroke="#10b981" stroke-width="2" stroke-dasharray="4 2"/>')
-    svg_lines.append(f'<text x="{PAD_L+86}" y="{PAD_T+7}" font-size="11" fill="rgba(128,128,128,0.9)">적정재고</text>')
+    svg_lines.append(f'<text x="{PAD_L+16}" y="{PAD_T+7}" font-size="11" fill="rgba(128,128,128,0.9)">Tồn kho thực</text>')
+    svg_lines.append(f'<line x1="{PAD_L+100}" y1="{PAD_T+1.5}" x2="{PAD_L+112}" y2="{PAD_T+1.5}" stroke="#10b981" stroke-width="2" stroke-dasharray="4 2"/>')
+    svg_lines.append(f'<text x="{PAD_L+116}" y="{PAD_T+7}" font-size="11" fill="rgba(128,128,128,0.9)">Tồn kho tối ưu</text>')
 
     svg_lines.append('</svg>')
     st.markdown("".join(svg_lines), unsafe_allow_html=True)
