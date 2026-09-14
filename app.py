@@ -584,78 +584,10 @@ def page_sa_salesmen():
         row[7].markdown(pct_str, unsafe_allow_html=True)
 
 
-def page_sa_province():
-    back_button("세일즈 분석으로", "sa_analysis")
-    st.markdown("## 🗺️ 지역 분석")
-
-    QUARTERS = {"Q1 (1~3월)": [1,2,3], "Q2 (4~6월)": [4,5,6], "Q3 (7~8월)": [7,8]}
-    cur_month = state["month"]
-    default_q = next((q for q, ms in QUARTERS.items() if cur_month in ms), "Q1 (1~3월)")
-    q_keys = list(QUARTERS.keys())
-    col_q, _ = st.columns([2, 6])
-    with col_q:
-        selected_q = st.selectbox("분기", q_keys, index=q_keys.index(default_q), key="prov_q_sel")
-    q_months = QUARTERS[selected_q]
-    st.markdown("---")
-
-    SKUS = ["BS VÀ HMP CŨ", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
-    SKU_LABELS = {"BS VÀ HMP CŨ": "BS / HMP", "PPSU": "PPSU", "KHĂN ƯỚT": "KHĂN ƯỚT", "SỮA TẮM": "SỮA TẮM"}
-
-    prov_data = {}
-    for m in q_months:
-        for kpp_code, kpp_data in records.get(str(m), {}).items():
-            prov = kpp_data.get("province", "") or "기타"
-            if prov not in prov_data:
-                prov_data[prov] = {s: 0 for s in SKUS}
-            for sa_data in kpp_data.get("salesmen", {}).values():
-                skus = sa_data.get("skus", {})
-                for sku in SKUS:
-                    prov_data[prov][sku] += skus.get(sku, 0) or 0
-
-    if not prov_data:
-        st.info("데이터 없음")
-        return
-
-    st.markdown(f"**{selected_q} — SKU별 상위 5개 성**")
-    st.markdown("---")
-
-    # 2열 그리드로 SKU 4개 배치
-    sku_pairs = [(SKUS[0], SKUS[1]), (SKUS[2], SKUS[3])]
-    for sku_left, sku_right in sku_pairs:
-        col_l, col_r = st.columns(2)
-        for col, sku in [(col_l, sku_left), (col_r, sku_right)]:
-            with col:
-                ranked = sorted(prov_data.items(), key=lambda x: -x[1][sku])
-                top5 = [(prov, d[sku]) for prov, d in ranked if d[sku] > 0][:5]
-                max_amt = top5[0][1] if top5 else 1
-                st.markdown(f"#### {SKU_LABELS[sku]}")
-                if not top5:
-                    st.markdown("<span style='color:#555;'>데이터 없음</span>", unsafe_allow_html=True)
-                    continue
-                for rank, (prov, amt) in enumerate(top5, 1):
-                    bar_w = int(amt / max_amt * 100)
-                    medal = ["🥇","🥈","🥉","4️⃣","5️⃣"][rank-1]
-                    st.markdown(
-                        f"<div style='margin-bottom:10px;max-width:630px;'>"
-                        f"<div style='display:flex;justify-content:space-between;margin-bottom:3px;'>"
-                        f"<span>{medal} {prov}</span>"
-                        f"<span style='font-weight:700;'>{fmt_ty(amt)}</span>"
-                        f"</div>"
-                        f"<div style='background:#222;border-radius:3px;height:6px;'>"
-                        f"<div style='background:#4A9EFF;width:{bar_w}%;height:6px;border-radius:3px;'></div>"
-                        f"</div></div>",
-                        unsafe_allow_html=True
-                    )
-        st.markdown("---")
-
-
 def page_sa_analysis():
     sp = state.get("sp")
     if sp == "salesmen":
         page_sa_salesmen()
-        return
-    if sp == "province":
-        page_sa_province()
         return
 
     back_button("홈으로", "home")
@@ -671,11 +603,11 @@ def page_sa_analysis():
   <div class="home-desc">분기별 달성률 순위</div>
 </a>""", unsafe_allow_html=True)
     with c2:
-        st.markdown(f"""<a href="?p=sa_analysis&sp=province&m={m}" target="_self" class="home-card">
-  <div class="home-icon">🗺️</div>
-  <div class="home-title">지역 분석</div>
-  <div class="home-desc">SKU별 상위 5개 성</div>
-</a>""", unsafe_allow_html=True)
+        st.markdown("""<div class="home-card" style="opacity:0.45;cursor:default;pointer-events:none;">
+  <div class="home-icon">🔧</div>
+  <div class="home-title">점검중</div>
+  <div class="home-desc">준비 중입니다</div>
+</div>""", unsafe_allow_html=True)
 
 
 def page_sales_asm():
