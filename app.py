@@ -533,19 +533,28 @@ def _sa_monthly_chart(sa_key, max_month):
             dot_colors.append("#ef4444")
 
     fig = go.Figure()
+    # 줄기 (얇은 막대)
+    fig.add_trace(go.Bar(
+        x=months, y=actuals,
+        marker_color=dot_colors,
+        marker_line_width=0,
+        marker_opacity=0.55,
+        width=0.04,
+        name="실적",
+        showlegend=True,
+        hovertemplate="%{y:.1f}Tr<extra>실적</extra>",
+    ))
+    # 끝 마커 (원형 점)
     fig.add_trace(go.Scatter(
         x=months, y=actuals,
-        mode="lines+markers",
-        name="실적",
-        line=dict(color="rgba(150,150,145,0.25)", width=1.5),
+        mode="markers",
         marker=dict(
-            size=11,
+            size=12,
             color=dot_colors,
-            line=dict(color="rgba(20,20,18,0.9)", width=2),
+            line=dict(color="rgba(15,15,12,0.85)", width=2),
         ),
-        text=[f"{a:.1f}" for a in actuals],
-        textposition="top center",
-        textfont=dict(size=10, color="rgba(160,160,155,0.85)"),
+        showlegend=False,
+        hovertemplate="%{y:.1f}Tr<extra></extra>",
     ))
 
     tgt_x = [months[i] for i, t in enumerate(targets) if t > 0]
@@ -567,6 +576,7 @@ def _sa_monthly_chart(sa_key, max_month):
         yaxis=dict(gridcolor="rgba(128,128,128,0.12)", ticksuffix="Tr", rangemode="tozero"),
         xaxis=dict(gridcolor="rgba(0,0,0,0)"),
         font=dict(color="#aaa", size=12),
+        bargap=0.6,
     )
     return fig
 
