@@ -655,7 +655,7 @@ def page_npp_stock():
             months_str = "∞"; months_color = "color:#ff7875;font-weight:600;"
         else:
             ms = amt / avg_monthly
-            months_str = f"{ms:.1f}개월"
+            months_str = f"{ms:.1f} tháng"
             months_color = "color:#ff7875;font-weight:600;" if ms > 6 else ""
 
         row = st.columns([2.2, 1.1, 1.4, 1.5])
