@@ -251,25 +251,24 @@ def get_region(code):
     parts = code.split(".")
     return REGION_MAP.get(parts[1], parts[1]) if len(parts) >= 2 else ""
 
-def card_href(page, **kwargs):
-    params = f"p={page}"
-    for k, v in kwargs.items():
-        params += f"&{k}={v}"
-    return f"?{params}"
+def nav_to(**kwargs):
+    """Streamlit 내부 네비게이션 — 세션 유지"""
+    st.query_params.update(kwargs)
+    st.rerun()
 
 def back_button(label, page, **kwargs):
     params = {"p": page}
     if "asm"   in kwargs: params["asm"] = kwargs["asm"]
-    if "npp"   in kwargs: params["npp"] = kwargs["npp"]
     if "month" in kwargs: params["m"]   = str(kwargs["month"])
     if "sp"    in kwargs: params["sp"]  = kwargs["sp"]
-    query = "&".join(f"{k}={v}" for k, v in params.items())
     month = kwargs.get("month", state["month"])
-    st.markdown(
-        f'<a href="?{query}" target="_self" class="nav-back">← {label}</a>'
-        f'<a href="?p=home&m={month}" target="_self" class="nav-home">🏠 홈</a>',
-        unsafe_allow_html=True,
-    )
+    c1, c2, _ = st.columns([1, 1, 6])
+    with c1:
+        if st.button(f"← {label}", key=f"back__{page}__{state['page']}"):
+            nav_to(**params)
+    with c2:
+        if st.button("🏠 Trang chủ", key=f"home__{page}__{state['page']}"):
+            nav_to(p="home", m=str(month))
 
 def month_selector(current_month):
     available = sorted([int(k) for k in records.keys() if k.isdigit()])
@@ -410,11 +409,13 @@ def page_home():
     month = state["month"]
     col, _ = st.columns([1, 1])
     with col:
-        st.markdown(f"""<a href="{card_href('npp_list', m=month)}" target="_self" class="home-card">
+        st.markdown("""<div class="home-card" style="cursor:default;">
           <div class="home-icon">🗂️</div>
           <div class="home-title">Quản lý NPP</div>
           <div class="home-desc">Doanh số theo SKU và xu hướng hàng tháng</div>
-        </a>""", unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
+        if st.button("Vào xem →", key="home_npp_btn", use_container_width=True):
+            nav_to(p="npp_list", m=str(month))
 
 
 def page_npp_list():
@@ -451,8 +452,6 @@ def page_npp_list():
                 name = d.get("_name", code)
                 saleout_total = 0
             name_short = name[:38] + ("…" if len(name) > 38 else "")
-            href_so  = card_href("npp_detail", npp=code, asm=asm_code, m=month)
-            href_inv = card_href("npp_stock",  npp=code, asm=asm_code, m=month)
             npp_inv_amt = sum(
                 s.get("amt", 0) for sk, s in inv_month.get(code, {}).items()
                 if not sk.startswith("_")
@@ -463,6 +462,9 @@ def page_npp_list():
             so_display = fmt_inv(saleout_total) if has_so else "Không có"
             so_badge   = "" if has_so else '<div class="npp-no-so-badge">Không có sale out</div>'
             province   = get_region(code) or d.get("_province") or d.get("province", "")
+            inv_display = inv_str
+            if optimal_str:
+                inv_display += f" ({optimal_str})"
             with col:
                 st.markdown(
                     f'<div class="{wrap_cls}">'
@@ -471,20 +473,18 @@ def page_npp_list():
                     f'<div class="npp-name">{name_short}</div>'
                     f'{so_badge}'
                     f'</div>'
-                    f'<div class="npp-card-body">'
-                    f'<a href="{href_so}" target="_self" class="npp-half npp-half-left">'
-                    f'<div class="npp-half-lbl">Sale out</div>'
-                    f'<div class="npp-half-amt">{so_display}</div>'
-                    f'</a>'
-                    f'<a href="{href_inv}" target="_self" class="npp-half">'
-                    f'<div class="npp-half-lbl">Tồn kho</div>'
-                    f'<div class="npp-half-amt npp-half-inv">{inv_str}{"<span style=\'font-size:0.78rem;color:#888;font-weight:400;\'> (" + optimal_str + ")</span>" if optimal_str else ""}</div>'
-                    f'<div class="{months_cls}">{months_str}</div>'
-                    f'</a>'
-                    f'</div>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
+                b1, b2 = st.columns(2)
+                with b1:
+                    lbl_so = f"📊 {so_display}"
+                    if st.button(lbl_so, key=f"so_{code}", use_container_width=True):
+                        nav_to(p="npp_detail", npp=code, asm=asm_code, m=str(month))
+                with b2:
+                    lbl_inv = f"📦 {inv_display}"
+                    if st.button(lbl_inv, key=f"inv_{code}", use_container_width=True):
+                        nav_to(p="npp_stock", npp=code, asm=asm_code, m=str(month))
 
 
 def page_npp_detail():
