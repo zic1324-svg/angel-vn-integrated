@@ -224,6 +224,21 @@ def save_asm_password(login_id, new_hash):
 def _hash_pw(pw): return hashlib.sha256(pw.encode()).hexdigest()
 
 records, inv_records, load_error = load_data()
+
+@st.cache_data(ttl=300)
+def load_planned_staff():
+    try:
+        headers = {"Authorization": f"token {TOKEN}",
+                   "Accept": "application/vnd.github.v3+json"}
+        req = urllib.request.Request(
+            f"https://api.github.com/gists/{GIST_ID}", headers=headers)
+        g = json.loads(urllib.request.urlopen(req, timeout=10).read())
+        c = g.get("files", {}).get("planned_staff.json", {}).get("content", "")
+        return json.loads(c) if c else {}
+    except Exception:
+        return {}
+
+planned_map = load_planned_staff()
 if load_error:
     st.error(f"Lỗi tải dữ liệu: {load_error}")
 
@@ -464,7 +479,7 @@ def page_npp_list():
             so_badge   = "" if has_so else '<div class="npp-no-so-badge">Không có sale out</div>'
             province   = get_region(code) or d.get("_province") or d.get("province", "")
             current_staff = len(d.get("salesmen", {})) if has_so else 0
-            planned_staff = inv_month.get(code, {}).get("_planned_staff")
+            planned_staff = planned_map.get(code) or inv_month.get(code, {}).get("_planned_staff")
             staff_str = (f"{current_staff}/{planned_staff}" if planned_staff
                          else str(current_staff) if current_staff else "")
             staff_html = f'<div class="npp-staff">👤 {staff_str}</div>' if staff_str else ""
@@ -535,7 +550,7 @@ def page_npp_detail():
     c1.metric("ASM", asm_name)
     c2.metric(f"Tổng tháng {month}", fmt(npp["total"]) if npp else "Không có sale out")
     current_staff = len(npp.get("salesmen", {})) if npp else 0
-    planned_staff = inv_meta.get("_planned_staff")
+    planned_staff = planned_map.get(code) or inv_meta.get("_planned_staff")
     staff_disp = f"{current_staff}/{planned_staff}" if planned_staff else str(current_staff)
     c3.metric("Số nhân viên", staff_disp)
 

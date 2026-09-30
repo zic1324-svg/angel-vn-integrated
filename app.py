@@ -264,6 +264,21 @@ def load_data():
         return {}, {}, str(e)
 
 records, inv_records, load_error = load_data()
+
+@st.cache_data(ttl=300)
+def load_planned_staff():
+    try:
+        headers = {"Authorization": f"token {TOKEN}",
+                   "Accept": "application/vnd.github.v3+json"}
+        req = urllib.request.Request(
+            f"https://api.github.com/gists/{GIST_ID}", headers=headers)
+        g = json.loads(urllib.request.urlopen(req, timeout=10).read())
+        c = g.get("files", {}).get("planned_staff.json", {}).get("content", "")
+        return json.loads(c) if c else {}
+    except Exception:
+        return {}
+
+planned_map = load_planned_staff()
 if load_error:
     st.error(f"데이터 로드 실패: {load_error}")
 
@@ -547,7 +562,7 @@ def page_asm_npp_list():
             so_badge = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
             province = get_region(code) or d.get("_province") or d.get("province", "")
             current_staff = len(d.get("salesmen", {})) if has_so else 0
-            planned_staff = inv_month.get(code, {}).get("_planned_staff")
+            planned_staff = planned_map.get(code) or inv_month.get(code, {}).get("_planned_staff")
             staff_str = (f"{current_staff}/{planned_staff}" if planned_staff
                          else str(current_staff) if current_staff else "")
             staff_html = f'<div class="npp-staff">👤 {staff_str}</div>' if staff_str else ""
@@ -861,7 +876,7 @@ def page_sales_npp_list():
             so_badge = "" if has_so else '<div class="npp-no-so-badge">세일아웃 없음</div>'
             province = get_region(code) or d.get("_province") or d.get("province", "")
             current_staff = len(d.get("salesmen", {})) if has_so else 0
-            planned_staff = inv_month.get(code, {}).get("_planned_staff")
+            planned_staff = planned_map.get(code) or inv_month.get(code, {}).get("_planned_staff")
             staff_str = (f"{current_staff}/{planned_staff}" if planned_staff
                          else str(current_staff) if current_staff else "")
             staff_html = f'<div class="npp-staff">👤 {staff_str}</div>' if staff_str else ""
@@ -925,7 +940,7 @@ def page_sales_npp():
     c1.metric("ASM", asm_name)
     c2.metric(f"{month}월 합계", fmt(npp["total"]) if npp else "세일아웃 없음")
     current_staff = len(npp.get("salesmen", {})) if npp else 0
-    planned_staff = inv_meta.get("_planned_staff")
+    planned_staff = planned_map.get(code) or inv_meta.get("_planned_staff")
     staff_disp = f"{current_staff}/{planned_staff}" if planned_staff else str(current_staff)
     c3.metric("세일즈맨 수", staff_disp)
 
