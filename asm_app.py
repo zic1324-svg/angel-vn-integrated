@@ -233,7 +233,11 @@ def load_planned_staff():
         req = urllib.request.Request(
             f"https://api.github.com/gists/{GIST_ID}", headers=headers)
         g = json.loads(urllib.request.urlopen(req, timeout=10).read())
-        c = g.get("files", {}).get("planned_staff.json", {}).get("content", "")
+        f = g.get("files", {}).get("planned_staff.json", {})
+        if f.get("truncated"):
+            raw = urllib.request.Request(f["raw_url"], headers=headers)
+            return json.loads(urllib.request.urlopen(raw, timeout=15).read())
+        c = f.get("content", "")
         return json.loads(c) if c else {}
     except Exception:
         return {}
