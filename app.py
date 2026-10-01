@@ -595,6 +595,15 @@ def page_asm_npp_list():
                 )
 
 
+def _sa_key(sa_name):
+    k = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
+    if ")" in k:
+        i = k.rfind(")") + 1
+        tail = k[i:].strip()
+        k = k[:i] + (" " + tail if tail else "")
+    return k
+
+
 def _sa_monthly_chart(sa_key, max_month):
     """sa_key에 해당하는 세일즈맨의 1월~max_month 월별 실적+타겟 plotly 차트"""
     months, actuals, targets = [], [], []
@@ -602,9 +611,7 @@ def _sa_monthly_chart(sa_key, max_month):
         actual = target = 0
         for kpp_data in records.get(str(m), {}).values():
             for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
-                k = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
-                if ")" in k:
-                    k = k[:k.rfind(")")+1]
+                k = _sa_key(sa_name)
                 if k == sa_key:
                     actual = sa_data.get("total", 0)
                     target = sa_data.get("_target", 0)
@@ -691,9 +698,7 @@ def page_sa_salesmen():
         npp_name = kpp_data.get("name", kpp_code)
         asm_code = kpp_data.get("asm", "")
         for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
-            key = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
-            if ")" in key:
-                key = key[:key.rfind(")")+1]
+            key = _sa_key(sa_name)
             if key not in sa_map:
                 sa_map[key] = {"name": key.split("(NPP")[0].strip(), "key": key, "total": 0, "target": 0}
             sa_map[key]["npp"]      = npp_name
@@ -709,9 +714,7 @@ def page_sa_salesmen():
     if month > 1:
         for kpp_data in records.get(str(month - 1), {}).values():
             for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
-                k = sa_name[5:] if sa_name.startswith("Sale ") else sa_name
-                if ")" in k:
-                    k = k[:k.rfind(")")+1]
+                k = _sa_key(sa_name)
                 pt = sa_data.get("total", 0)
                 ptg = sa_data.get("_target", 0)
                 if k not in prev_pct_map:
