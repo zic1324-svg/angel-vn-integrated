@@ -811,10 +811,102 @@ def page_sa_salesmen():
             st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
 
+def page_sa_npps():
+    """세일즈 분석 > 대리점 서브페이지: 평균매출 / 현재 재고 / 사용개월수 (정렬 3종)"""
+    back_button("세일즈 분석으로", "sa_analysis")
+    st.markdown("## 🏬 대리점")
+
+    col_m, _ = st.columns([2, 6])
+    with col_m:
+        month = month_selector(state["month"])
+    if not month:
+        return
+    st.markdown("---")
+
+    inv_month = inv_records.get(str(month), {})
+    codes = set(records.get(str(month), {})) | set(inv_month)
+
+    rows = []
+    for code in codes:
+        npp = records.get(str(month), {}).get(code, {})
+        inv_meta = inv_month.get(code, {})
+        # 1월~당해월 중 매출이 있던 달의 월평균 (재고 현황 화면의 예상사용월수와 같은 기준)
+        sales = [records.get(str(m), {}).get(code, {}).get("total", 0) for m in range(1, month + 1)]
+        sales = [v for v in sales if v > 0]
+        avg = sum(sales) / len(sales) if sales else 0
+        inv_amt = sum(v.get("amt", 0) for k, v in inv_meta.items() if not k.startswith("_") and isinstance(v, dict))
+        inv_qty = sum(v.get("qty", 0) for k, v in inv_meta.items() if not k.startswith("_") and isinstance(v, dict))
+        if inv_amt <= 0:
+            months_use = None
+        elif avg <= 0:
+            months_use = float("inf")
+        else:
+            months_use = inv_amt / avg
+        rows.append({
+            "code": code,
+            "name": npp.get("name") or inv_meta.get("_name", code),
+            "asm": ASM_FULL.get(npp.get("asm") or inv_meta.get("_asm", ""), npp.get("asm") or inv_meta.get("_asm", "")),
+            "province": get_region(code) or npp.get("province") or inv_meta.get("_province", ""),
+            "avg": avg, "inv_amt": inv_amt, "inv_qty": inv_qty, "months": months_use,
+        })
+
+    SORTS = {"avg": "평균매출 순", "inv": "재고량 순", "months": "사용개월수 순"}
+    sort_key = st.session_state.get("npp_sort", "avg")
+    btn_cols = st.columns([1.3, 1.3, 1.5, 4])
+    for col, (k, label) in zip(btn_cols, SORTS.items()):
+        if col.button(("✔ " if k == sort_key else "") + label, key=f"npp_sort_{k}", use_container_width=True):
+            st.session_state["npp_sort"] = k
+            st.rerun()
+
+    def sort_val(r):
+        if sort_key == "avg":
+            return r["avg"]
+        if sort_key == "inv":
+            return r["inv_amt"]
+        return -1 if r["months"] is None else r["months"]   # 재고 없는 대리점은 맨 뒤
+    rows.sort(key=lambda r: -sort_val(r))
+
+    st.markdown(f"**{month}월 대리점 {len(rows)}곳** "
+                f"<span style='font-size:0.78rem;color:#888;'>· 평균매출 = 1월~{month}월 중 매출이 있던 달의 월평균 · "
+                f"사용개월수 = 재고금액 ÷ 평균매출 (6개월 초과 시 빨간색)</span>", unsafe_allow_html=True)
+    st.markdown('<hr class="divider">', unsafe_allow_html=True)
+
+    W = [0.4, 3.0, 1.0, 1.4, 1.4, 1.5, 1.3]
+    hdr = st.columns(W)
+    for col, label in zip(hdr, ["**#**", "**대리점**", "**지역**", "**ASM**", "**평균매출**", "**현재 재고**", "**사용개월수**"]):
+        col.markdown(label)
+    st.markdown('<hr class="divider">', unsafe_allow_html=True)
+
+    for i, r in enumerate(rows, 1):
+        row = st.columns(W)
+        row[0].markdown(str(i))
+        row[1].markdown(f"<span style='font-size:0.9rem;font-weight:600;'>{r['name']}</span>", unsafe_allow_html=True)
+        prov = REGION_MAP.get(r["province"], r["province"]).replace("Tỉnh ", "").replace("Thành phố ", "")
+        row[2].markdown(f"<span style='font-size:0.82rem;color:#888;'>{prov}</span>", unsafe_allow_html=True)
+        row[3].markdown(f"<span style='font-size:0.82rem;'>{r['asm']}</span>", unsafe_allow_html=True)
+        row[4].markdown(fmt(r["avg"]) if r["avg"] > 0 else "—")
+        if r["inv_amt"] > 0:
+            row[5].markdown(f"{fmt_inv(r['inv_amt'])}<br><span style='font-size:0.75rem;color:#888;'>{int(r['inv_qty']):,}개</span>",
+                            unsafe_allow_html=True)
+        else:
+            row[5].markdown("—")
+        ms = r["months"]
+        if ms is None:
+            row[6].markdown("—")
+        elif ms == float("inf"):
+            row[6].markdown("<span style='color:#ff7875;font-weight:600;'>∞</span>", unsafe_allow_html=True)
+        else:
+            style = "color:#ff7875;font-weight:600;" if ms > 6 else ""
+            row[6].markdown(f"<span style='{style}'>{ms:.1f}개월</span>", unsafe_allow_html=True)
+
+
 def page_sa_analysis():
     sp = state.get("sp")
     if sp == "salesmen":
         page_sa_salesmen()
+        return
+    if sp == "npps":
+        page_sa_npps()
         return
 
     back_button("홈으로", "home")
@@ -830,11 +922,11 @@ def page_sa_analysis():
   <div class="home-desc">분기별 달성률 순위</div>
 </a>""", unsafe_allow_html=True)
     with c2:
-        st.markdown("""<div class="home-card" style="opacity:0.45;cursor:default;pointer-events:none;">
-  <div class="home-icon">🔧</div>
-  <div class="home-title">점검중</div>
-  <div class="home-desc">준비 중입니다</div>
-</div>""", unsafe_allow_html=True)
+        st.markdown(f"""<a href="?p=sa_analysis&sp=npps&m={m}" target="_self" class="home-card">
+  <div class="home-icon">🏬</div>
+  <div class="home-title">대리점</div>
+  <div class="home-desc">평균매출·재고·사용개월수</div>
+</a>""", unsafe_allow_html=True)
 
 
 def page_sales_asm():
