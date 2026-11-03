@@ -122,6 +122,13 @@ LOCAL_DATA   = Path(__file__).parent / "data" / "integrated_records.json"
 LOCAL_INV    = Path(__file__).parent / "data" / "inventory_records.json"
 
 SKU_LIST = ["BS VÀ HMP CŨ", "GIẶT XẢ", "PPSU", "KHĂN ƯỚT", "SỮA TẮM"]
+
+# 표시 대상 대리점(KPP 코드): 해당 대리점 세일즈맨의 달성률 뒤에 노란 동그라미 표시 (데이터에는 영향 없음)
+MARKED_NPP_CODES = {
+    "KPP.PTH.00009", "KPP.HGI.0001", "KPP.TQU.00002",
+    "KPP.LCA.00002", "KPP.PTH.0008", "KPP.KHH.00005",
+}
+MARK_DOT = " <span title='표시 대상 대리점' style='color:#facc15;'>●</span>"
 SKU_ICONS = {
     "BS VÀ HMP CŨ": "🍼",
     "GIẶT XẢ":      "👕",
@@ -701,6 +708,8 @@ def page_sa_salesmen():
             key = _sa_key(sa_name)
             if key not in sa_map:
                 sa_map[key] = {"name": key.split("(NPP")[0].strip(), "key": key, "total": 0, "target": 0}
+            if kpp_code in MARKED_NPP_CODES:
+                sa_map[key]["marked"] = True
             sa_map[key]["npp"]      = npp_name
             sa_map[key]["province"] = kpp_data.get("province", "")
             sa_map[key]["asm"]      = ASM_FULL.get(asm_code, asm_code)
@@ -769,6 +778,8 @@ def page_sa_salesmen():
             pct_color = "#10b981" if pct >= 100 else ("#f59e0b" if pct >= 70 else "#ef4444")
             prev_str = f" <span style='font-size:0.75rem;color:#555;'>({prev_pct:.0f}%)</span>" if prev_pct is not None else ""
             pct_str = f"<span style='color:{pct_color};font-weight:700;'>{pct:.1f}%</span>{prev_str}"
+            if r.get("marked"):
+                pct_str += MARK_DOT
         else:
             pct_str = "<span style='color:#555;'>—</span>"
 
@@ -1012,7 +1023,8 @@ def page_sales_npp():
             if tgt and tgt > 0:
                 pct = amt / tgt * 100
                 pct_color = "#10b981" if pct >= 100 else ("#f59e0b" if pct >= 70 else "#ef4444")
-                cell_html = f"{fmt(amt)}<br><span style='color:{pct_color};font-weight:700;'>{pct:.1f}%</span>"
+                dot = MARK_DOT if code in MARKED_NPP_CODES else ""
+                cell_html = f"{fmt(amt)}<br><span style='color:{pct_color};font-weight:700;'>{pct:.1f}%</span>{dot}"
                 row[i + 1].markdown(cell_html, unsafe_allow_html=True)
             else:
                 row[i + 1].markdown(fmt(amt) if amt else "—")
