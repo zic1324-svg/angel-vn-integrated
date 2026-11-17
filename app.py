@@ -129,6 +129,13 @@ MARKED_NPP_CODES = {
     "KPP.LCA.00002", "KPP.PTH.0008", "KPP.KHH.00005",
 }
 MARK_DOT = " <span title='표시 대상 대리점' style='color:#facc15;'>●</span>"
+
+# 세일즈 분석 > 세일즈맨 화면에서 제외할 사번(Mã NV) — 퇴사·전환 인원 목록 (데이터에는 영향 없음, 표시만 제외)
+EXCLUDED_EMPLOYEE_IDS = {
+    "00368", "01882", "02265", "03200", "03602", "03862", "03993", "04004",
+    "04060", "04350", "04528", "04661", "04687", "04691", "04725", "04768",
+    "04779", "04879", "04907", "05009", "05032", "05050", "05098", "05132",
+}
 SKU_ICONS = {
     "BS VÀ HMP CŨ": "🍼",
     "GIẶT XẢ":      "👕",
@@ -705,6 +712,8 @@ def page_sa_salesmen():
         npp_name = kpp_data.get("name", kpp_code)
         asm_code = kpp_data.get("asm", "")
         for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
+            if sa_data.get("employee_id") in EXCLUDED_EMPLOYEE_IDS:
+                continue
             key = _sa_key(sa_name)
             if key not in sa_map:
                 sa_map[key] = {"name": key.split("(NPP")[0].strip(), "key": key, "total": 0, "target": 0}
@@ -723,6 +732,8 @@ def page_sa_salesmen():
     if month > 1:
         for kpp_data in records.get(str(month - 1), {}).values():
             for sa_name, sa_data in kpp_data.get("salesmen", {}).items():
+                if sa_data.get("employee_id") in EXCLUDED_EMPLOYEE_IDS:
+                    continue
                 k = _sa_key(sa_name)
                 pt = sa_data.get("total", 0)
                 ptg = sa_data.get("_target", 0)
