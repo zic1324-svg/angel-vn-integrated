@@ -302,13 +302,17 @@ if load_error:
 
 
 # ── 쿼리 파라미터로 상태 관리 ─────────────────────────────────────────
+def _latest_month(default=8):
+    ms = [int(k) for k in records if str(k).isdigit() and records[k]]
+    return max(ms) if ms else default
+
 def get_state():
     p = st.query_params
     return {
         "page":         p.get("p", "home"),
         "selected_asm": p.get("asm", None),
         "selected_npp": p.get("npp", None),
-        "month":        int(p.get("m", 8)),
+        "month":        int(p.get("m", _latest_month())),
         "src":          p.get("src", "asm"),
         "sp":           p.get("sp", None),
     }
